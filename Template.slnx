@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/migrations/">
+    <Project Path="migrations/Template.Migrations.PostgreSql/Template.Migrations.PostgreSql.csproj" />
+    <Project Path="migrations/Template.Migrations.SqlServer/Template.Migrations.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Template.Application/Template.Application.csproj" />
+    <Project Path="src/Template.Domain/Template.Domain.csproj" />
+    <Project Path="src/Template.Infrastructure/Template.Infrastructure.csproj" />
+    <Project Path="src/Template.WebApi/Template.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Template.IntegrationTests/Template.IntegrationTests.csproj" />
+    <Project Path="tests/Template.UnitTests/Template.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Template.DbMigrator/Template.DbMigrator.csproj" />
+  </Folder>
+</Solution>

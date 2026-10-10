@@ -1,0 +1,23 @@
+@Template.WebApi_HostAddress = http://localhost:5155
+
+GET {{Template.WebApi_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{Template.WebApi_HostAddress}}/api/work-items
+Content-Type: application/json
+
+{
+  "title": "Try the template API"
+}
+
+###
+
+GET {{Template.WebApi_HostAddress}}/api/work-items
+Accept: application/json
+
+###
+
+POST {{Template.WebApi_HostAddress}}/api/work-items/{{workItemId}}/complete
+Accept: application/json
