@@ -23,6 +23,7 @@ public sealed class WorkItemConfiguration : IEntityTypeConfiguration<WorkItem>
         builder.Property(workItem => workItem.Status)
             .HasConversion<string>()
             .HasMaxLength(32)
+            .IsConcurrencyToken()
             .IsRequired();
     }
 }

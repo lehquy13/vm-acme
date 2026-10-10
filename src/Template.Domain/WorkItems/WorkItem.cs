@@ -4,6 +4,8 @@ namespace Template.Domain.WorkItems;
 
 public sealed class WorkItem : AggregateRoot<WorkItemId>
 {
+    private readonly object _completionLock = new();
+
     private WorkItem() { }
 
     public WorkItemTitle Title { get; private set; } = null!;
@@ -24,12 +26,15 @@ public sealed class WorkItem : AggregateRoot<WorkItemId>
 
     public bool Complete()
     {
-        if (Status is WorkItemStatus.Completed)
+        lock (_completionLock)
         {
-            return false;
-        }
+            if (Status is WorkItemStatus.Completed)
+            {
+                return false;
+            }
 
-        Status = WorkItemStatus.Completed;
-        return true;
+            Status = WorkItemStatus.Completed;
+            return true;
+        }
     }
 }

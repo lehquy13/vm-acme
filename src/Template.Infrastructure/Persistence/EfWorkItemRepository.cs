@@ -17,12 +17,19 @@ public sealed class EfWorkItemRepository(TemplateDbContext dbContext) : IWorkIte
 
     public async Task<IReadOnlyList<WorkItem>> ListAsync(CancellationToken cancellationToken) =>
         await dbContext.WorkItems
-            .OrderBy(workItem => workItem.Title.Value)
+            .OrderBy(workItem => workItem.Title)
             .ToArrayAsync(cancellationToken);
 
     public async Task UpdateAsync(WorkItem workItem, CancellationToken cancellationToken)
     {
         dbContext.WorkItems.Update(workItem);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new InvalidOperationException("Work item changed while it was being completed.", exception);
+        }
     }
 }

@@ -151,7 +151,7 @@
 - [x] Run `dotnet restore Template.slnx` and `dotnet build Template.slnx`.
 - [x] Run `dotnet test Template.slnx` and confirm unit and integration suites pass.
 - [x] Run the API with default settings and verify `/health` and the create/list/complete flow over HTTP.
-- [ ] Review `git status` and confirm pre-existing staged files and `.idea/` were not modified.
+- [x] Review `git status` and confirm pre-existing staged files and `.idea/` were not modified.
 
 ## Self-review
 

@@ -39,4 +39,26 @@ public sealed class WorkItemTests
         Assert.False(workItem.Complete());
         Assert.Equal(WorkItemStatus.Completed, workItem.Status);
     }
+
+    [Fact]
+    public async Task Complete_succeeds_only_once_for_concurrent_calls()
+    {
+        var workItem = WorkItem.Create(new WorkItemTitle("Complete concurrently"));
+        using var start = new Barrier(32);
+        var calls = Enumerable.Range(0, 32)
+            .Select(_ => Task.Factory.StartNew(
+                () =>
+                {
+                    start.SignalAndWait();
+                    return workItem.Complete();
+                },
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default))
+            .ToArray();
+
+        var results = await Task.WhenAll(calls);
+
+        Assert.Single(results, completed => completed);
+    }
 }

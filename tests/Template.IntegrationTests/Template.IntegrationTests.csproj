@@ -22,6 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Template.WebApi\Template.WebApi.csproj" />
     <ProjectReference Include="..\..\src\Template.Infrastructure\Template.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\migrations\Template.Migrations.PostgreSql\Template.Migrations.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\migrations\Template.Migrations.SqlServer\Template.Migrations.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>

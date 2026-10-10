@@ -19,6 +19,7 @@ public sealed class TemplateDbContextModelSnapshot : ModelSnapshot
                 .HasColumnType("uniqueidentifier");
 
             entity.Property<string>("Status")
+                .IsConcurrencyToken()
                 .IsRequired()
                 .HasMaxLength(32)
                 .HasColumnType("nvarchar(32)");
