@@ -1,10 +1,10 @@
-# Template Project Implementation Plan
+# Acme Project Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the approved runnable .NET 10 `Template` solution with DDD/Clean Architecture, optional database providers, and the requested tooling and deployment files.
+**Goal:** Build the approved runnable .NET 10 `Acme` solution with DDD/Clean Architecture, optional database providers, and the requested tooling and deployment files.
 
-**Architecture:** `Template.Domain` owns the WorkItem aggregate and value objects. Application owns use cases and the aggregate repository contract; Infrastructure provides in-memory-by-default and optional EF Core persistence; WebApi is a thin composition root. PostgreSQL and SQL Server migrations are isolated in their own assemblies and are invoked only by the migrator.
+**Architecture:** `Acme.Domain` owns the WorkItem aggregate and value objects. Application owns use cases and the aggregate repository contract; Infrastructure provides in-memory-by-default and optional EF Core persistence; WebApi is a thin composition root. PostgreSQL and SQL Server migrations are isolated in their own assemblies and are invoked only by the migrator.
 
 **Tech Stack:** .NET 10, ASP.NET Core Minimal APIs, EF Core 10, PostgreSQL and SQL Server EF providers, xUnit, WebApplicationFactory, Docker, Helm.
 
@@ -17,7 +17,7 @@
 - In-memory persistence is the default and requires no database environment variables or service.
 - WorkItem aggregate rules remain in Domain; endpoints only bind HTTP and call Application use cases.
 - Database migrations never run during API startup.
-- Preserve `vm-acme.slnx`, `.gitignore`, and `.idea/`; create `Template.slnx` alongside them.
+- Preserve `vm-acme.slnx`, `.gitignore`, and `.idea/`; create `Acme.slnx` alongside them.
 
 ## Review Focus
 
@@ -32,7 +32,7 @@
 ### Task 1: Solution projects and dependency graph
 
 **Files:**
-- Create: `Directory.Build.props`, `Template.slnx`
+- Create: `Directory.Build.props`, `Acme.slnx`
 - Create: all 9 `.csproj` files under `src/`, `tools/`, `migrations/`, and `tests/` named in the spec
 - Create: starter `Program.cs` files for WebApi and DbMigrator
 
@@ -41,15 +41,15 @@
 
 - [x] Create projects targeting `net10.0`; set nullable and implicit usings consistently in `Directory.Build.props`.
 - [x] Add the exact project references described by the spec and EF Core 10 provider package references to Infrastructure/migration projects; xUnit test package references come from project templates.
-- [x] Add every project to `Template.slnx`; verify `dotnet sln Template.slnx list` reports all 9 projects.
-- [x] Run `dotnet build Template.slnx` and resolve restore or reference errors before adding behavior.
+- [x] Add every project to `Acme.slnx`; verify `dotnet sln Acme.slnx list` reports all 9 projects.
+- [x] Run `dotnet build Acme.slnx` and resolve restore or reference errors before adding behavior.
 
 ### Task 2: WorkItem domain model and unit tests
 
 **Files:**
-- Create: `src/Template.Domain/Common/Entity.cs`, `AggregateRoot.cs`
-- Create: `src/Template.Domain/WorkItems/WorkItemId.cs`, `WorkItemTitle.cs`, `WorkItemStatus.cs`, `WorkItem.cs`
-- Create: `tests/Template.UnitTests/WorkItems/WorkItemTests.cs`
+- Create: `src/Acme.Domain/Common/Entity.cs`, `AggregateRoot.cs`
+- Create: `src/Acme.Domain/WorkItems/WorkItemId.cs`, `WorkItemTitle.cs`, `WorkItemStatus.cs`, `WorkItem.cs`
+- Create: `tests/Acme.UnitTests/WorkItems/WorkItemTests.cs`
 
 **Interfaces:**
 - Produces `WorkItem.Create(WorkItemTitle title)`, `bool WorkItem.Complete()`, `WorkItem.Id`, `WorkItem.Title`, and `WorkItem.Status`.
@@ -62,10 +62,10 @@
 ### Task 3: Application contracts and use cases
 
 **Files:**
-- Create: `src/Template.Application/WorkItems/IWorkItemRepository.cs`
-- Create: `src/Template.Application/WorkItems/WorkItemDto.cs`
-- Create: `src/Template.Application/WorkItems/CreateWorkItem.cs`, `ListWorkItems.cs`, `CompleteWorkItem.cs`
-- Create: `src/Template.Application/DependencyInjection.cs`
+- Create: `src/Acme.Application/WorkItems/IWorkItemRepository.cs`
+- Create: `src/Acme.Application/WorkItems/WorkItemDto.cs`
+- Create: `src/Acme.Application/WorkItems/CreateWorkItem.cs`, `ListWorkItems.cs`, `CompleteWorkItem.cs`
+- Create: `src/Acme.Application/DependencyInjection.cs`
 
 **Interfaces:**
 - `IWorkItemRepository`: `Task AddAsync(WorkItem, CancellationToken)`, `Task<WorkItem?> GetAsync(WorkItemId, CancellationToken)`, `Task<IReadOnlyList<WorkItem>> ListAsync(CancellationToken)`, `Task UpdateAsync(WorkItem, CancellationToken)`.
@@ -75,16 +75,16 @@
 
 - [x] Add use-case tests through a small fake repository for create, list, invalid title, complete, repeated complete, and missing ID.
 - [x] Implement the repository contract and exact use case signatures above without referencing ASP.NET Core or EF Core from Application.
-- [x] Run unit tests and `dotnet build Template.slnx`; verify Domain and Application remain framework-independent.
+- [x] Run unit tests and `dotnet build Acme.slnx`; verify Domain and Application remain framework-independent.
 
 ### Task 4: Infrastructure persistence and registration
 
 **Files:**
-- Create: `src/Template.Infrastructure/Persistence/InMemoryWorkItemRepository.cs`
-- Create: `src/Template.Infrastructure/Persistence/TemplateDbContext.cs`
-- Create: `src/Template.Infrastructure/Persistence/EfWorkItemRepository.cs`
-- Create: `src/Template.Infrastructure/Persistence/Configurations/WorkItemConfiguration.cs`
-- Create: `src/Template.Infrastructure/DependencyInjection.cs`
+- Create: `src/Acme.Infrastructure/Persistence/InMemoryWorkItemRepository.cs`
+- Create: `src/Acme.Infrastructure/Persistence/AcmeDbContext.cs`
+- Create: `src/Acme.Infrastructure/Persistence/EfWorkItemRepository.cs`
+- Create: `src/Acme.Infrastructure/Persistence/Configurations/WorkItemConfiguration.cs`
+- Create: `src/Acme.Infrastructure/DependencyInjection.cs`
 
 **Interfaces:**
 - Consumes `IWorkItemRepository` and the WorkItem aggregate from Tasks 2–3.
@@ -98,8 +98,8 @@
 ### Task 5: Web API endpoints and integration tests
 
 **Files:**
-- Create: `src/Template.WebApi/Program.cs`, `Endpoints/WorkItemEndpoints.cs`, `appsettings.json`
-- Create: `tests/Template.IntegrationTests/TemplateWebApplicationFactory.cs`, `WorkItemEndpointTests.cs`
+- Create: `src/Acme.WebApi/Program.cs`, `Endpoints/WorkItemEndpoints.cs`, `appsettings.json`
+- Create: `tests/Acme.IntegrationTests/AcmeWebApplicationFactory.cs`, `WorkItemEndpointTests.cs`
 
 **Interfaces:**
 - HTTP: `POST /api/work-items` with `{ "title": "..." }`; `GET /api/work-items`; `POST /api/work-items/{id:guid}/complete`; `GET /health`.
@@ -113,13 +113,13 @@
 ### Task 6: Provider migrations and database migrator
 
 **Files:**
-- Create provider-specific initial migration and model snapshot under `migrations/Template.Migrations.PostgreSql/`
-- Create provider-specific initial migration and model snapshot under `migrations/Template.Migrations.SqlServer/`
-- Create: `tools/Template.DbMigrator/Program.cs`
+- Create provider-specific initial migration and model snapshot under `migrations/Acme.Migrations.PostgreSql/`
+- Create provider-specific initial migration and model snapshot under `migrations/Acme.Migrations.SqlServer/`
+- Create: `tools/Acme.DbMigrator/Program.cs`
 
 **Interfaces:**
-- CLI: `dotnet run --project tools/Template.DbMigrator -- --provider PostgreSql --connection "..."` or `--provider SqlServer --connection "..."`.
-- Consumes provider-specific migration assemblies and the shared `TemplateDbContext`.
+- CLI: `dotnet run --project tools/Acme.DbMigrator -- --provider PostgreSql --connection "..."` or `--provider SqlServer --connection "..."`.
+- Consumes provider-specific migration assemblies and the shared `AcmeDbContext`.
 
 - [x] Implement initial schema migration for the WorkItems table in each provider project.
 - [x] Configure each migration assembly to use its corresponding provider and reference the shared Infrastructure DbContext.
@@ -130,13 +130,13 @@
 
 **Files:**
 - Create: `Dockerfile`, `compose.yaml`
-- Create: `deploy/helm/template/Chart.yaml`, `values.yaml`, and templates for Deployment and Service
+- Create: `deploy/helm/acme/Chart.yaml`, `values.yaml`, and templates for Deployment and Service
 - Create: `init.sh`, `init.ps1`
 
 **Interfaces:**
 - Compose runs the API without database services and leaves in-memory persistence as default.
 - Helm values configure image, service, replica count, persistence provider, and connection string via environment/secret reference.
-- Init scripts restore and build `Template.slnx` with nonzero exit on failure.
+- Init scripts restore and build `Acme.slnx` with nonzero exit on failure.
 
 - [x] Implement a multi-stage .NET 10 Docker build and database-free Compose service with a health check.
 - [x] Implement a minimal Helm chart with configurable image, ports, replica count, and optional persistence environment.
@@ -148,8 +148,8 @@
 **Files:**
 - Modify only files required to address verification failures.
 
-- [x] Run `dotnet restore Template.slnx` and `dotnet build Template.slnx`.
-- [x] Run `dotnet test Template.slnx` and confirm unit and integration suites pass.
+- [x] Run `dotnet restore Acme.slnx` and `dotnet build Acme.slnx`.
+- [x] Run `dotnet test Acme.slnx` and confirm unit and integration suites pass.
 - [x] Run the API with default settings and verify `/health` and the create/list/complete flow over HTTP.
 - [x] Review `git status` and confirm pre-existing staged files and `.idea/` were not modified.
 

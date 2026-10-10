@@ -1,8 +1,8 @@
-# Template Clean Architecture Project Design
+# Acme Clean Architecture Project Design
 
 ## Goal
 
-Create a runnable .NET 10 starter solution named `Template` with the requested Clean Architecture and DDD project layout. A developer can run the API and exercise a small use case without configuring or starting a database.
+Create a runnable .NET 10 starter solution named `Acme` with the requested Clean Architecture and DDD project layout. A developer can run the API and exercise a small use case without configuring or starting a database.
 
 ## Approved direction
 
@@ -12,23 +12,23 @@ Use a small `WorkItem` aggregate as the example domain. Domain owns its rules an
 
 ```text
 src/
-  Template.Domain/
-  Template.Application/
-  Template.Infrastructure/
-  Template.WebApi/
+  Acme.Domain/
+  Acme.Application/
+  Acme.Infrastructure/
+  Acme.WebApi/
 tools/
-  Template.DbMigrator/
+  Acme.DbMigrator/
 migrations/
-  Template.Migrations.PostgreSql/
-  Template.Migrations.SqlServer/
+  Acme.Migrations.PostgreSql/
+  Acme.Migrations.SqlServer/
 tests/
-  Template.UnitTests/
-  Template.IntegrationTests/
+  Acme.UnitTests/
+  Acme.IntegrationTests/
 deploy/
-  helm/template/
+  helm/acme/
 Dockerfile
 compose.yaml
-Template.slnx
+Acme.slnx
 init.sh
 init.ps1
 ```
@@ -41,16 +41,16 @@ init.ps1
 - Provide Application use cases to create, list, and complete work items. No mediator dependency is required for this small template; endpoints call the use cases through DI.
 - Register the in-memory repository by default. Provide an opt-in EF Core persistence path configured by provider and connection string. The API must start and serve requests with no database environment variables or services.
 - Expose create/list/complete HTTP endpoints below `/api/work-items`, plus `/health`. Invalid input returns a client error; completing a missing ID returns 404.
-- Keep `Template.Migrations.PostgreSql` and `Template.Migrations.SqlServer` separate and provider-specific. `Template.DbMigrator` accepts a provider and connection string and applies the matching migrations. Migration execution is never part of the default API startup.
+- Keep `Acme.Migrations.PostgreSql` and `Acme.Migrations.SqlServer` separate and provider-specific. `Acme.DbMigrator` accepts a provider and connection string and applies the matching migrations. Migration execution is never part of the default API startup.
 - Include focused domain unit tests and API integration tests using the in-memory implementation.
 - Provide Docker Compose for a database-free API run and a Helm chart for deploying the API with provider selection and connection settings configurable.
 - Provide `init.sh` and `init.ps1` scripts that create/restore/build the solution using the installed .NET SDK. Scripts must not install databases or require secrets.
-- Preserve existing unrelated workspace files and avoid replacing the existing `vm-acme.slnx`; create the requested `Template.slnx` alongside it.
+- Preserve existing unrelated workspace files and avoid replacing the existing `vm-acme.slnx`; create the requested `Acme.slnx` alongside it.
 
 ## Acceptance criteria
 
-1. `dotnet build Template.slnx` succeeds from the repository root.
-2. `dotnet run --project src/Template.WebApi` starts with the default in-memory configuration and no external service.
+1. `dotnet build Acme.slnx` succeeds from the repository root.
+2. `dotnet run --project src/Acme.WebApi` starts with the default in-memory configuration and no external service.
 3. Health and work-item create/list/complete flows are usable over HTTP, and complete on an unknown ID returns 404.
 4. Unit and integration test projects build and their tests pass.
 5. The solution contains both provider-specific migrations projects, the migrator, Docker files, Helm chart, and both initialization scripts at the requested paths.

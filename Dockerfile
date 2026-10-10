@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
 COPY . .
-RUN dotnet restore src/Template.WebApi/Template.WebApi.csproj
-RUN dotnet publish src/Template.WebApi/Template.WebApi.csproj \
+RUN dotnet restore src/Acme.WebApi/Acme.WebApi.csproj
+RUN dotnet publish src/Acme.WebApi/Acme.WebApi.csproj \
     --configuration Release \
     --no-restore \
     --output /app/publish
@@ -16,4 +16,4 @@ RUN apt-get update \
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "Template.WebApi.dll"]
+ENTRYPOINT ["dotnet", "Acme.WebApi.dll"]

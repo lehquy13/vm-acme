@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/migrations/">
+    <Project Path="migrations/Acme.Migrations.PostgreSql/Acme.Migrations.PostgreSql.csproj" />
+    <Project Path="migrations/Acme.Migrations.SqlServer/Acme.Migrations.SqlServer.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Acme.Application/Acme.Application.csproj" />
+    <Project Path="src/Acme.Domain/Acme.Domain.csproj" />
+    <Project Path="src/Acme.Infrastructure/Acme.Infrastructure.csproj" />
+    <Project Path="src/Acme.WebApi/Acme.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Acme.IntegrationTests/Acme.IntegrationTests.csproj" />
+    <Project Path="tests/Acme.UnitTests/Acme.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Acme.DbMigrator/Acme.DbMigrator.csproj" />
+  </Folder>
+</Solution>
