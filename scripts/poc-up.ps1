@@ -62,6 +62,8 @@ try {
     Write-Host "Building and publishing API and migration images ($Provider)..."
     Run 'docker' @('login',$registry.registry,'--username',$registry.registryUser,'--password-stdin') 120 $registry.registryPassword | Out-Null
     New-Item -ItemType Directory -Force -Path $evidence | Out-Null
+    $config.images=@()
+    $config.buildCommands=@()
     foreach($version in @('1','2')) {
         foreach($target in @('api','migrator')) {
             $image="$($registry.registry)/$($registry.project)/vm-acme-${target}:v${version}-$buildId"
@@ -69,11 +71,14 @@ try {
             Write-Utf8 "$evidence/build-$target-v$version.txt" ($build -join "`n")
             Write-Utf8 "$evidence/push-$target-v$version.txt" ((Run 'docker' @('push',$image)) -join "`n")
             Write-Utf8 "$evidence/pull-$target-v$version.txt" ((Run 'docker' @('pull',$image)) -join "`n")
+            $digests=((Run 'docker' @('image','inspect','--format','{{json .RepoDigests}}',$image)) -join '') | ConvertFrom-Json
+            $config.images+=@{target=$target;version=$version;reference=$image;digests=@($digests)}
+            $config.buildCommands+="docker build --target $target --build-arg RELEASE_VERSION=$version.0.0 --build-arg MIGRATION_RELEASE=$version -t $image ."
         }
     }
-    $config=[pscustomobject]$config
     $config.upCommand="scripts/poc-up.ps1 -Provider $Provider -ProofId $ProofId -DatabaseName $DatabaseName$(if($UseExistingInfrastructure){' -UseExistingInfrastructure'})"
     $config.verifyCommand="scripts/poc-verify.ps1 -Provider $Provider"
+    $config=[pscustomobject]$config
     Write-Host "Deploying V1 ($Provider); migrations gate API startup..."
     Deploy-Application $config "v1-$buildId" (Todo-MigrationTarget $Provider)
     Migration-Logs $config "$evidence/migration-v1.txt" | Out-Null
