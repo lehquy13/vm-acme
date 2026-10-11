@@ -1,0 +1,12 @@
+{
+    "sourceFingerprint":  "303486d26aedc35cca109c091310dcfb5d66f2be5b7a5e43c8c1a8d9c838d0c6",
+    "provider":  "postgresql",
+    "digests":  [
+                    "192.168.49.2:30002/vm-acme-poc/vm-acme-bundle-postgresql@sha256:68460c76b36bafbc9cd59b20da92bfe69e84a43b9665aa1ebd6d67a3899cb694"
+                ],
+    "nonrootReadonlyLaunch":  "PASS",
+    "image":  "192.168.49.2:30002/vm-acme-poc/vm-acme-bundle-postgresql:hardening-303486d26aed",
+    "timeUtc":  "2026-10-11T16:02:05.7977087Z",
+    "status":  "PASS",
+    "realDatabaseIdempotentRun":  "PASS"
+}

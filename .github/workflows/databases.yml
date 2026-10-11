@@ -1,0 +1,25 @@
+name: Database integration tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build provider-specific self-contained bundles
+        shell: pwsh
+        run: ./scripts/build-bundles.ps1 -Runtime linux-x64
+      - name: Run required PostgreSQL and SQL Server tests and bundles
+        shell: pwsh
+        run: ./scripts/test-databases.ps1 -BundleRuntime linux-x64

@@ -5,3 +5,7 @@
 .superpowers/
 .worktrees/
 .poc/
+artifacts/
+.codegraph/
+.env
+.env.*

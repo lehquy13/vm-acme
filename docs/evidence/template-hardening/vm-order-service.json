@@ -1,0 +1,15 @@
+{
+    "readiness":  "PASS",
+    "helmMigration":  "PASS",
+    "registerLoginTodo":  "PASS",
+    "initializerBuild":  "PASS",
+    "imageIds":  [
+                     "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-order-service-api@sha256:0ed3babd94ae4680509b33f020a8d86b266830b71bb1687885052d28240bd129",
+                     "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator@sha256:b045285445bef3a0dafcfc4a2d819999e6bd3c54b0cf1d9e3d52a8d29ef76ddd"
+                 ],
+    "name":  "vm-order-service",
+    "timeUtc":  "2026-10-11T15:57:09.8589859Z",
+    "namespace":  "vm-acme-poc-namecheck-order-service",
+    "status":  "PASS",
+    "generatedDeploymentHelper":  "PASS"
+}

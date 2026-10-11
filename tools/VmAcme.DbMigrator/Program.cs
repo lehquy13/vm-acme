@@ -2,15 +2,20 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using VmAcme;
+using VmAcme.Configuration;
 using VmAcme.Migrations.PostgreSql;
 using VmAcme.Persistence;
 
 MigrationOptions? options;
+var configuration = new ConfigurationManager();
+configuration.AddEnvironmentVariables();
 try
 {
-    options = ParseArguments(args);
+    await SecretBootstrap.LoadAsync(configuration, includeJwt: false);
+    options = ParseArguments(args, configuration);
 }
 catch (Exception exception)
 {
@@ -104,13 +109,14 @@ catch (Exception exception)
     return 1;
 }
 
-static MigrationOptions? ParseArguments(string[] arguments)
+static MigrationOptions? ParseArguments(string[] arguments, IConfiguration configuration)
 {
     var (cliProvider, cliConnectionString) = ParseCommandLineArguments(arguments);
 
     var provider = cliProvider ?? Environment.GetEnvironmentVariable("Persistence__Provider");
-    var connectionString = cliConnectionString ??
-                           Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+    var connectionString = configuration["Secrets:Mode"] == "KeyVault"
+        ? configuration.GetConnectionString("DefaultConnection")
+        : cliConnectionString ?? configuration.GetConnectionString("DefaultConnection");
 
     if (!TryNormalizePersistenceSettings(provider, connectionString, out var normalizedProvider,
             out var normalizedConnectionString))

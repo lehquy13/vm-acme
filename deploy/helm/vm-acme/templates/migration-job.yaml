@@ -32,13 +32,27 @@ spec:
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           resources: {{ toYaml .Values.migration.resources | nindent 12 }}
           env:
+            {{- if eq .Values.migration.artifact "Bundle" }}
+            - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+              value: /tmp/.net
+            {{- end }}
+            - name: Secrets__Mode
+              value: {{ .Values.secrets.mode | quote }}
+            {{- if eq .Values.secrets.mode "KeyVault" }}
+            - name: Secrets__VaultUri
+              value: {{ .Values.secrets.vaultUri | quote }}
+            - name: Secrets__ConnectionSecret
+              value: {{ .Values.migration.vaultConnectionSecret | quote }}
+            {{- end }}
             - name: Persistence__Provider
               value: {{ .Values.persistence.provider | quote }}
+            {{- if eq .Values.secrets.mode "Environment" }}
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.migration.connectionSecret }}
                   key: {{ .Values.migration.connectionKey }}
+            {{- end }}
             - name: MIGRATION_TARGET
               value: {{ .Values.migration.target | quote }}
             - name: MIGRATION_TIMEOUT_SECONDS

@@ -16,7 +16,7 @@ public sealed class VmAcmeWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureAppConfiguration((_, configuration) =>
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Persistence:Provider"] = null,
+                ["Persistence:Provider"] = "InMemory",
                 ["ConnectionStrings:DefaultConnection"] = null,
                 ["Authentication:Jwt:Issuer"] = "vm-acme-tests",
                 ["Authentication:Jwt:Audience"] = "vm-acme-tests",

@@ -33,22 +33,36 @@ spec:
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           ports: [{name: http, containerPort: 8080}]
           env:
+            - name: Secrets__Mode
+              value: {{ .Values.secrets.mode | quote }}
+            {{- if eq .Values.secrets.mode "KeyVault" }}
+            - name: Secrets__VaultUri
+              value: {{ .Values.secrets.vaultUri | quote }}
+            - name: Secrets__ConnectionSecret
+              value: {{ .Values.application.vaultConnectionSecret | quote }}
+            - name: Secrets__JwtSecret
+              value: {{ .Values.application.vaultJwtSecret | quote }}
+            {{- end }}
             - name: Persistence__Provider
               value: {{ .Values.persistence.provider | quote }}
+            {{- if eq .Values.secrets.mode "Environment" }}
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.application.connectionSecret }}
                   key: {{ .Values.application.connectionKey }}
+            {{- end }}
             - name: Authentication__Jwt__Issuer
               value: {{ .Values.application.jwtIssuer | quote }}
             - name: Authentication__Jwt__Audience
               value: {{ .Values.application.jwtAudience | quote }}
+            {{- if eq .Values.secrets.mode "Environment" }}
             - name: Authentication__Jwt__SigningKey
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.application.jwtSigningSecret | quote }}
                   key: {{ .Values.application.jwtSigningKey | quote }}
+            {{- end }}
           startupProbe:
             httpGet: {path: /ready, port: http}
             failureThreshold: 40

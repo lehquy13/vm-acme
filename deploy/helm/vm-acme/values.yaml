@@ -10,7 +10,12 @@ image:
 imagePullSecrets: []
 persistence:
   provider: PostgreSql
+secrets:
+  mode: Environment
+  vaultUri: ""
 application:
+  vaultConnectionSecret: ""
+  vaultJwtSecret: ""
   serviceAccount: vm-acme-api
   connectionSecret: ""
   connectionKey: connection
@@ -22,6 +27,8 @@ application:
   podAnnotations: {}
   serviceAccountAnnotations: {}
 migration:
+  artifact: Runner
+  vaultConnectionSecret: ""
   enabled: true
   orchestration: helm
   image:

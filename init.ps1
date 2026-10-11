@@ -21,14 +21,40 @@ try {
     $projectName = $projectName.Substring(0, 1).ToUpperInvariant() + $projectName.Substring(1)
 
     $projectNameLower = $projectName.ToLowerInvariant()
+    $projectNameUpper = $projectName.ToUpperInvariant()
+    if ($projectNameLower.EndsWith('_', [StringComparison]::Ordinal)) {
+        throw 'Project name must not end with an underscore.'
+    }
+    $deploymentSlug = $projectNameLower.Replace('_', '-')
+    $deploymentName = "vm-$deploymentSlug"
+    if ($deploymentSlug.Length -gt 40) {
+        throw 'Deployment slug must be 40 characters or fewer.'
+    }
     $solutionPath = Join-Path $scriptRoot "vm-$lowerPlaceholder.slnx"
     if (-not (Test-Path -LiteralPath $solutionPath)) {
         throw "Could not find the $placeholder template solution. Run this initializer before renaming the template."
     }
 
     if ($projectName -cne $placeholder) {
-        $excludedPath = '(^|[\\/])(\.git|\.idea|\.superpowers|\.poc|bin|obj)([\\/]|$)'
+        $excludedPath = '(^|[\\/])(\.git|\.codegraph|artifacts|\.idea|\.superpowers|\.poc|bin|obj)([\\/]|$)'
         $textExtensions = @('.cs', '.csproj', '.slnx', '.props', '.json', '.http', '.yaml', '.yml', '.tpl', '.md', '.sh', '.ps1', '.txt')
+        $solutionFile = "vm-$projectNameLower.slnx"
+
+        function Replace-TemplateTokens([string]$Value) {
+            $evaluator = [System.Text.RegularExpressions.MatchEvaluator] {
+                param($match)
+                switch -CaseSensitive ($match.Value) {
+                    'vm-acme.slnx' { $solutionFile }
+                    'vm-acme' { $deploymentName }
+                    'vm_acme' { "vm_$projectNameLower" }
+                    'VM_ACME' { "VM_$projectNameUpper" }
+                    'Acme' { $projectName }
+                    'acme' { $projectNameLower }
+                }
+            }
+            return [regex]::Replace($Value, 'vm-acme\.slnx|vm-acme|vm_acme|VM_ACME|Acme|acme', $evaluator)
+        }
+
         $files = Get-ChildItem -LiteralPath $scriptRoot -Force -Recurse -File |
             Where-Object {
                 $_.FullName -notmatch $excludedPath -and
@@ -38,22 +64,22 @@ try {
 
         foreach ($file in $files) {
             $content = [IO.File]::ReadAllText($file.FullName)
-            $content = $content.Replace($placeholder, $projectName).Replace($lowerPlaceholder, $projectNameLower)
+            $content = Replace-TemplateTokens $content
             [IO.File]::WriteAllText($file.FullName, $content, [Text.UTF8Encoding]::new($false))
         }
 
         $filesToRename = Get-ChildItem -LiteralPath $scriptRoot -Force -Recurse -File |
-            Where-Object { $_.FullName -notmatch $excludedPath -and $_.Name.Contains($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) }
+            Where-Object { $_.FullName -notmatch $excludedPath -and $_.Name.IndexOf($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
         foreach ($file in $filesToRename) {
-            $newName = $file.Name.Replace($placeholder, $projectName).Replace($lowerPlaceholder, $projectNameLower)
+            $newName = if ($file.Name -ceq "vm-$lowerPlaceholder.slnx") { $solutionFile } else { Replace-TemplateTokens $file.Name }
             Rename-Item -LiteralPath $file.FullName -NewName $newName
         }
 
         $directoriesToRename = Get-ChildItem -LiteralPath $scriptRoot -Force -Recurse -Directory |
-            Where-Object { $_.FullName -notmatch $excludedPath -and $_.Name.Contains($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) } |
+            Where-Object { $_.FullName -notmatch $excludedPath -and $_.Name.IndexOf($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) -ge 0 } |
             Sort-Object { $_.FullName.Length } -Descending
         foreach ($directory in $directoriesToRename) {
-            $newName = $directory.Name.Replace($placeholder, $projectName).Replace($lowerPlaceholder, $projectNameLower)
+            $newName = Replace-TemplateTokens $directory.Name
             Rename-Item -LiteralPath $directory.FullName -NewName $newName
         }
     }

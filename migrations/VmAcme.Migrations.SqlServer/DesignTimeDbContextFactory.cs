@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
+using VmAcme.Configuration;
 using VmAcme.Persistence;
 
 namespace VmAcme;
@@ -8,7 +10,10 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<VmA
 {
     public VmAcmeDbContext CreateDbContext(string[] args)
     {
-        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        var configuration = new ConfigurationManager();
+        configuration.AddEnvironmentVariables();
+        SecretBootstrap.LoadAsync(configuration, includeJwt: false).GetAwaiter().GetResult();
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new InvalidOperationException(
                 "Set ConnectionStrings__DefaultConnection before creating the SQL Server design-time context.");

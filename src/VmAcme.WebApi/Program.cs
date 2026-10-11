@@ -1,20 +1,33 @@
 using System.Globalization;
 using System.Reflection;
 using FastEndpoints;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using VmAcme;
 using VmAcme.Authentication;
 using VmAcme.Behaviors;
+using VmAcme.Configuration;
 using VmAcme.Infrastructure;
+using VmAcme.Telemetry;
 using VmAcme.Todos;
 using ProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 
 var builder = WebApplication.CreateBuilder(args);
+await SecretBootstrap.LoadAsync(builder.Configuration, includeJwt: true);
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("vm-acme-api"))
+    .WithTracing(tracing => tracing.AddAspNetCoreInstrumentation()
+        .AddSqlClientInstrumentation().AddSource("Npgsql")
+        .AddProcessor(new DatabaseTraceRedactor()).AddOtlpExporter())
+    .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation()
+        .AddMeter("System.Runtime", "Npgsql", "Microsoft.Data.SqlClient", "VmAcme.Database").AddOtlpExporter());
 
 builder.Services
     .AddApplication()
-    .AddInfrastructure(builder.Configuration)
+    .AddInfrastructure(builder.Configuration, builder.Environment.EnvironmentName)
     .AddIdentityServices(builder.Configuration);
 builder.Services.AddFastEndpoints();
 builder.Services.AddProblemDetails();

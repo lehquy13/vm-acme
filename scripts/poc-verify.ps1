@@ -2,6 +2,43 @@ param([ValidateSet('postgres','sqlserver')][string]$Provider='postgres')
 $ErrorActionPreference='Stop'
 . "$PSScriptRoot/poc-common.ps1"
 $config=Get-Config $Provider
+function Get-SourceProvenance {
+    $entries=New-Object 'System.Collections.Generic.List[string]'
+    foreach($directory in @('src','tools','migrations')) {
+        $path=Join-Path $Root $directory
+        if(Test-Path -LiteralPath $path) {
+            foreach($file in Get-ChildItem -LiteralPath $path -Recurse -File) {
+                $relative=$file.FullName.Substring($Root.Length).TrimStart('\','/').Replace('\','/')
+                if($relative -match '(^|/)(bin|obj|\.git|generated|testresults|node_modules)/'){continue}
+                $hash=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+                $entries.Add("$relative`t$hash")
+            }
+        }
+    }
+    foreach($name in @('Dockerfile','.dockerignore','Directory.Build.props')) {
+        $path=Join-Path $Root $name
+        if(Test-Path -LiteralPath $path) {
+            $hash=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+            $entries.Add("$name`t$hash")
+        }
+    }
+    [string[]]$sorted=$entries.ToArray()
+    [Array]::Sort($sorted,[StringComparer]::Ordinal)
+    $canonical=[Text.Encoding]::UTF8.GetBytes(($sorted -join "`n"))
+    $digest=[Security.Cryptography.SHA256]::Create()
+    try { $sha=[BitConverter]::ToString($digest.ComputeHash($canonical)).Replace('-','').ToLowerInvariant() }
+    finally { $digest.Dispose() }
+    $status=@(Run 'git' @('status','--porcelain','--untracked-files=all','--','src','tools','migrations','Dockerfile','.dockerignore','Directory.Build.props'))
+    return [pscustomobject]@{
+        sourceSha=((Run 'git' @('rev-parse','HEAD')) -join '').Trim()
+        sourceDirty=($status.Count -gt 0)
+        sourceFingerprint=$sha
+    }
+}
+$currentSource=Get-SourceProvenance
+if(-not $config.sourceFingerprint -or $config.sourceFingerprint -ne $currentSource.sourceFingerprint) {
+    throw 'PoC config source fingerprint does not match current product inputs; rerun scripts/poc-up.sh before verification.'
+}
 $run=Get-Date -Format 'yyyyMMdd-HHmmss'
 $evidence=Join-Path $State "$Provider/verify-$run"
 New-Item -ItemType Directory -Force -Path $evidence | Out-Null
@@ -119,13 +156,14 @@ try {
     Assert-Gate ($imageIds.Count -gt 0 -and ($imageIds -join '') -match 'sha256:') 'Kubernetes node pulled published API image'
     Assert-Gate ($deployment.spec.template.spec.containers[0].image -eq "$($config.registry)/$($config.project)/vm-acme-api:v2-$($config.buildId)") 'API uses the published V2 release artifact'
     $jobPods=(K @('-n',$config.namespace,'get','pods','-l','job-name=vm-acme-migrate','-o','json')) -join "`n" | ConvertFrom-Json
-    Assert-Gate (($jobPods.items.status.containerStatuses.imageID -join '') -match 'sha256:') 'Kubernetes node pulled published migration image'
+    $migrationImageIds=@($jobPods.items|ForEach-Object{$_.status.containerStatuses}|ForEach-Object{$_.imageID})
+    Assert-Gate (($migrationImageIds -join '') -match 'sha256:') 'Kubernetes node pulled published migration image'
     Assert-Gate ($deployment.spec.template.spec.serviceAccountName -ne $job.spec.template.spec.serviceAccountName) 'application and migration identities differ'
     $logs=(K @('-n',$config.namespace,'logs','deployment/vm-acme','--tail=100')) -join "`n"
     Write-Utf8 "$evidence/api.log" $logs
     Assert-Gate ($logs -match 'HTTP') 'emitted API request logs inspected'
     Diagnostics $config.namespace $evidence
-    $report=@{status='PASS';provider=$Provider;schemaUpgradeExecuted=$schemaUpgradeExecuted;mechanism='Helm pre-install/pre-upgrade migration Job (Argo CD not executed)';gates=$gates.ToArray();evidence=$evidence;initialHistory=$before;finalHistory=$after;apiImageIds=$imageIds;timeUtc=[DateTime]::UtcNow.ToString('o')}
+    $report=@{status='PASS';provider=$Provider;schemaUpgradeExecuted=$schemaUpgradeExecuted;mechanism='Helm pre-install/pre-upgrade migration Job (Argo CD not executed)';sourceSha=$config.sourceSha;sourceDirty=$config.sourceDirty;sourceFingerprint=$config.sourceFingerprint;gates=$gates.ToArray();evidence=$evidence;initialHistory=$before;finalHistory=$after;apiImageIds=$imageIds;migratorImageIds=$migrationImageIds;timeUtc=[DateTime]::UtcNow.ToString('o')}
     Write-Utf8 "$evidence/report.json" ($report|ConvertTo-Json -Depth 12)
     Write-Utf8 (Join-Path $State "$Provider/latest-report.txt") $evidence
     Write-Host "VERIFY PASS provider=$Provider gates=$($gates.Count) evidence=$evidence"

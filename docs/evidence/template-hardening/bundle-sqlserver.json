@@ -1,0 +1,12 @@
+{
+    "sourceFingerprint":  "303486d26aedc35cca109c091310dcfb5d66f2be5b7a5e43c8c1a8d9c838d0c6",
+    "provider":  "sqlserver",
+    "digests":  [
+                    "192.168.49.2:30002/vm-acme-poc/vm-acme-bundle-sqlserver@sha256:cd263d8a0edcdadbdd02a95cb9975c3b65df4dfd5e88dd280d397228e5bf4192"
+                ],
+    "nonrootReadonlyLaunch":  "PASS",
+    "image":  "192.168.49.2:30002/vm-acme-poc/vm-acme-bundle-sqlserver:hardening-303486d26aed",
+    "timeUtc":  "2026-10-11T16:02:21.2891847Z",
+    "status":  "PASS",
+    "realDatabaseIdempotentRun":  "PASS"
+}

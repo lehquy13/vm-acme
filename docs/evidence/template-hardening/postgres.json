@@ -1,0 +1,48 @@
+{
+    "sourceFingerprint":  "303486d26aedc35cca109c091310dcfb5d66f2be5b7a5e43c8c1a8d9c838d0c6",
+    "sourceSha":  "c0290c28b470bcfe9cd035bd405a3cec445b3589",
+    "initialHistory":  "20261010000100_InitialCreate\n20261011000100_AddDeploymentRevision\n20261011121557_AddTodoAccounts",
+    "timeUtc":  "2026-10-11T15:47:18.8207873Z",
+    "mechanism":  "Helm pre-install/pre-upgrade migration Job (Argo CD not executed)",
+    "gates":  [
+                  "V1 API image deployed",
+                  "create Todo in V1",
+                  "persisted Todo description and generated identifier",
+                  "persisted Todo description and generated identifier",
+                  "V2 migration history recorded",
+                  "existing V2 schema retained on rerun; V1 row has expected metadata",
+                  "V2 API image Ready",
+                  "persisted Todo description and generated identifier",
+                  "create Todo in V2",
+                  "new V2 inserts use upgraded column default",
+                  "complete Todo on real database",
+                  "invalid input rejected",
+                  "emitted Prometheus counter inspected",
+                  "repeat deployment applies zero completed migrations",
+                  "actual failing migration prevents Helm upgrade",
+                  "failure is a database SQL exception",
+                  "migration Job failed as expected",
+                  "failed migration leaves API rollout unchanged",
+                  "failed transaction leaves migration history unchanged",
+                  "failed EF migration rolls back its schema change",
+                  "persisted Todo description and generated identifier",
+                  "completed Todo survives recovery",
+                  "Kubernetes node pulled published API image",
+                  "API uses the published V2 release artifact",
+                  "Kubernetes node pulled published migration image",
+                  "application and migration identities differ",
+                  "emitted API request logs inspected"
+              ],
+    "provider":  "postgres",
+    "status":  "PASS",
+    "schemaUpgradeExecuted":  false,
+    "evidence":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\postgres\\verify-20261011-224613",
+    "sourceDirty":  true,
+    "finalHistory":  "20261010000100_InitialCreate\n20261011000100_AddDeploymentRevision\n20261011121557_AddTodoAccounts",
+    "apiImageIds":  [
+                        "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-acme-api@sha256:eb0864aea20ede9d45729f2506eb5974b52755827c2f251c4131355e617432e0"
+                    ],
+    "migratorImageIds":  [
+                             "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-acme-migrator@sha256:59e6ed18646db0609152dfd6f3dd00619a677e4525fae2f63ba009f53d38167a"
+                         ]
+}

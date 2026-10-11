@@ -7,10 +7,11 @@ services:
       - "8080:8080"
     environment:
       ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_ENVIRONMENT: Development
       Persistence__Provider: InMemory
       Authentication__Jwt__Issuer: vm-acme
       Authentication__Jwt__Audience: vm-acme-api
-      Authentication__Jwt__SigningKey: local-compose-only-signing-key-change-me
+      Authentication__Jwt__SigningKey: ${VM_ACME_LOCAL_JWT_KEY:?Generate a local signing key and set VM_ACME_LOCAL_JWT_KEY}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
