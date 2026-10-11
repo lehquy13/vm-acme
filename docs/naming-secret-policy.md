@@ -22,7 +22,7 @@ Provision `appsettings.secrets.json` outside Git and images. The name and `appse
 
 The API file contains `ConnectionStrings:DefaultConnection` and `Authentication:Jwt:SigningKey`. The migration file contains only `ConnectionStrings:DefaultConnection`. Set `Secrets__FallbackFile` to an absolute path. For shared relative file names set the same absolute `Secrets__BaseDirectory` on all three paths.
 
-API settings use the normal ASP.NET configuration (including local user secrets). Runner and provider EF factories use optional `appsettings.json` beside the executable and environment configuration, then the shared policy. Environment variables override the explicit file. The file is loaded only when settings are selected; an unavailable fallback file does not prevent a successful vault snapshot.
+API settings use the normal ASP.NET configuration (including local user secrets). Runner and provider EF factories use optional `appsettings.json` beside the executable and environment configuration, then the shared policy. For resolved secret keys, environment variables override the explicit file. Secret files cannot change the persistence provider or secret policy; those controls remain in normal application configuration. The file is loaded only when settings are selected; an unavailable fallback file does not prevent a successful vault snapshot.
 
 Kubernetes: create separate operator-owned Secrets from each file, outside the chart:
 

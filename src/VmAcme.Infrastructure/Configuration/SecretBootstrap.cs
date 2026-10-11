@@ -46,7 +46,7 @@ public static class SecretBootstrap
                 }
                 catch (Exception) { throw new InvalidOperationException("The configured secrets file could not be loaded."); }
             }
-            return Validate(fallback, includeJwt);
+            return Validate(fallback, includeJwt, configuration["Persistence:Provider"]);
         }
         if (mode == "AppSettings")
         {
@@ -75,7 +75,7 @@ public static class SecretBootstrap
             var values = new Dictionary<string, string?> { ["ConnectionStrings:DefaultConnection"] = await Read(connectionName) };
             if (signingName is not null) values["Authentication:Jwt:SigningKey"] = await Read(signingName);
             var candidate = new ConfigurationBuilder().AddConfiguration(configuration).AddInMemoryCollection(values).Build();
-            Publish(Validate(candidate, includeJwt), "KeyVault");
+            Publish(Validate(candidate, includeJwt, configuration["Persistence:Provider"]), "KeyVault");
         }
         catch (Exception)
         {
@@ -103,10 +103,9 @@ public static class SecretBootstrap
         }
     }
 
-    private static Dictionary<string, string?> Validate(IConfiguration configuration, bool includeJwt)
+    private static Dictionary<string, string?> Validate(IConfiguration configuration, bool includeJwt, string? provider)
     {
         var values = new Dictionary<string, string?>();
-        var provider = configuration["Persistence:Provider"];
         if (!includeJwt || !string.Equals(provider, "InMemory", StringComparison.OrdinalIgnoreCase))
         {
             var connection = configuration.GetConnectionString("DefaultConnection");

@@ -140,6 +140,7 @@ public sealed class SecretResolutionPolicyTests
         try
         {
             await File.WriteAllTextAsync(Path.Combine(root, "appsettings.secrets.json"), System.Text.Json.JsonSerializer.Serialize(new {
+                Persistence = new { Provider = "InMemory" },
                 ConnectionStrings = new { DefaultConnection = Connection }, Authentication = new { Jwt = new { SigningKey = Signing } }
             }));
             var config = Settings("AppSettings");
