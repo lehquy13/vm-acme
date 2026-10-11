@@ -1,4 +1,6 @@
 using VmAcme.WorkItems;
+using FluentValidation;
+using MediatR;
 
 namespace VmAcme.Endpoints;
 
@@ -7,6 +9,7 @@ public static class WorkItemEndpoints
     public static IEndpointRouteBuilder MapWorkItemEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/work-items").WithTags("WorkItems");
+        group.RequireAuthorization();
 
         group.MapPost("/", CreateAsync).WithName("CreateWorkItem");
         group.MapGet("/", ListAsync).WithName("ListWorkItems");
@@ -17,46 +20,45 @@ public static class WorkItemEndpoints
 
     private static async Task<IResult> CreateAsync(
         CreateWorkItemRequest request,
-        CreateWorkItem useCase,
+        ISender sender,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Title))
-        {
-            return Results.BadRequest(new { error = "Title is required." });
-        }
-
         try
         {
-            var workItem = await useCase.HandleAsync(request.Title, cancellationToken);
+            var workItem = await sender.Send(new CreateWorkItemCommand(request.Title), cancellationToken);
             return Results.Created($"/api/work-items/{workItem.Id}", workItem);
         }
-        catch (ArgumentException exception)
+        catch (ValidationException exception)
         {
-            return Results.BadRequest(new { error = exception.Message });
+            return Results.BadRequest(new { errors = exception.Errors.Select(error => error.ErrorMessage).Distinct() });
         }
     }
 
     private static async Task<IResult> ListAsync(
-        ListWorkItems useCase,
+        ISender sender,
         CancellationToken cancellationToken)
     {
-        var workItems = await useCase.HandleAsync(cancellationToken);
+        var workItems = await sender.Send(new ListWorkItemsQuery(), cancellationToken);
         return Results.Ok(workItems);
     }
 
     private static async Task<IResult> CompleteAsync(
         Guid id,
-        CompleteWorkItem useCase,
+        ISender sender,
         CancellationToken cancellationToken)
     {
         try
         {
-            var workItem = await useCase.HandleAsync(id, cancellationToken);
+            var workItem = await sender.Send(new CompleteWorkItemCommand(id), cancellationToken);
             return workItem is null ? Results.NotFound() : Results.Ok(workItem);
         }
         catch (InvalidOperationException exception)
         {
             return Results.BadRequest(new { error = exception.Message });
+        }
+        catch (ValidationException exception)
+        {
+            return Results.BadRequest(new { errors = exception.Errors.Select(error => error.ErrorMessage).Distinct() });
         }
     }
 

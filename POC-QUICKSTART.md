@@ -46,7 +46,7 @@ For an existing **explicitly authorized** Harbor, supply `POC_REGISTRY_ENDPOINT`
 
 ```bash
 ./scripts/poc-up.sh --provider postgres       # preserves DB/PVC; rebuilds release artifacts
-./scripts/poc-verify.sh --provider postgres   # upgrades V1 to V2 and exercises retry/failure/recovery
+./scripts/poc-verify.sh --provider postgres   # upgrades V1 to V2 and exercises retry/failure/recovery; verifier uses a synthetic short-lived JWT
 ./scripts/poc-cleanup.sh --provider postgres  # removes app/Job, retains database and Harbor
 ./scripts/poc-cleanup.sh --provider postgres --reset # explicit destructive reset of this provider only
 ./scripts/poc-cleanup.sh --registry --reset   # explicit registry/image/PVC deletion

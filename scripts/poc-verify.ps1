@@ -16,7 +16,7 @@ function Read-History {
     $sql=if($Provider -eq 'postgres'){'SELECT "MigrationId" FROM "__EFMigrationsHistory" ORDER BY "MigrationId";'}else{'SET NOCOUNT ON; SELECT MigrationId FROM __EFMigrationsHistory ORDER BY MigrationId;'}
     Database-Query $Provider $sql
 }
-function Api-Items { @(Invoke-RestMethod "$uri/api/work-items" -TimeoutSec 15) }
+function Api-Items { @(Invoke-RestMethod "$uri/api/work-items" -Headers $apiHeaders -TimeoutSec 15) }
 function Assert-Item([string]$Id,[string]$Title) {
     $item=Api-Items | Where-Object {$_.id -eq $Id}
     Assert-Gate ($item -and $item.title -eq $Title) 'persisted title and generated identifier'
@@ -26,6 +26,7 @@ try {
     Deploy-Application $config "v1-$($config.buildId)" '20261010000100_InitialCreate'
     $forward=Start-Forward $config.namespace 'vm-acme' 18080 8080
     $uri='http://127.0.0.1:18080'
+    $apiHeaders=@{Authorization="Bearer $(New-PocApiToken)"}
     Wait-Http "$uri/ready" 120 | Out-Null
     $version=Invoke-RestMethod "$uri/version" -TimeoutSec 15
     Assert-Gate ($version.version -like '1.0.0*') 'V1 API image deployed'
@@ -33,7 +34,7 @@ try {
     $schemaUpgradeExecuted=$before -notmatch '20261011000100_AddDeploymentRevision'
     Write-Utf8 "$evidence/history-v1.txt" $before
     $title="PoC $Provider $([guid]::NewGuid().ToString('N'))"
-    $created=Invoke-RestMethod "$uri/api/work-items" -Method Post -ContentType 'application/json' -Body (@{title=$title}|ConvertTo-Json) -TimeoutSec 15
+    $created=Invoke-RestMethod "$uri/api/work-items" -Method Post -Headers $apiHeaders -ContentType 'application/json' -Body (@{title=$title}|ConvertTo-Json) -TimeoutSec 15
     Assert-Gate ($created.id -and $created.status -eq 'Open') 'create sample feature in V1'
     Write-Utf8 "$evidence/sample-created.json" ($created|ConvertTo-Json)
     Assert-Item $created.id $title
@@ -62,13 +63,13 @@ try {
     $version=Invoke-RestMethod "$uri/version" -TimeoutSec 15
     Assert-Gate ($version.version -like '2.0.0*') 'V2 API image Ready'
     Assert-Item $created.id $title
-    $v2created=Invoke-RestMethod "$uri/api/work-items" -Method Post -ContentType 'application/json' -Body (@{title="V2 $title"}|ConvertTo-Json) -TimeoutSec 15
+    $v2created=Invoke-RestMethod "$uri/api/work-items" -Method Post -Headers $apiHeaders -ContentType 'application/json' -Body (@{title="V2 $title"}|ConvertTo-Json) -TimeoutSec 15
     $v2sql=if($Provider -eq 'postgres'){'SELECT "DeploymentRevision" FROM "WorkItems" WHERE "Id" = '''+$v2created.id+''';'}else{'SET NOCOUNT ON; SELECT DeploymentRevision FROM WorkItems WHERE Id = '''+$v2created.id+''';'}
     Assert-Gate ((Database-Query $Provider $v2sql) -eq 'v2') 'new V2 inserts use upgraded column default'
-    $completed=Invoke-RestMethod "$uri/api/work-items/$($created.id)/complete" -Method Post -TimeoutSec 15
+    $completed=Invoke-RestMethod "$uri/api/work-items/$($created.id)/complete" -Method Post -Headers $apiHeaders -TimeoutSec 15
     Assert-Gate ($completed.status -eq 'Completed') 'complete sample feature on real database'
     $badStatus=0
-    try { Invoke-RestMethod "$uri/api/work-items" -Method Post -ContentType 'application/json' -Body '{"title":""}' -TimeoutSec 15 | Out-Null } catch {
+    try { Invoke-RestMethod "$uri/api/work-items" -Method Post -Headers $apiHeaders -ContentType 'application/json' -Body '{"title":""}' -TimeoutSec 15 | Out-Null } catch {
         if($_.Exception.Response){$badStatus=[int]$_.Exception.Response.StatusCode}
     }
     Assert-Gate ($badStatus -eq 400) 'invalid input rejected'

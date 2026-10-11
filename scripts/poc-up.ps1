@@ -17,6 +17,7 @@ try {
     }
     Set-Secret $namespace 'vm-acme-api-db' @{connection=$apiConnection}
     Set-Secret $namespace 'vm-acme-migrator-db' @{connection=$migrationConnection}
+    Set-Secret $namespace 'vm-acme-jwt' @{'signing-key'='VmAcmePocJwtSigningKey-Only-For-Local-Testing-2026'}
     $auth=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("$($registry.registryUser):$($registry.registryPassword)"))
     $dockerConfig=@{auths=@{$registry.registry=@{auth=$auth}}}|ConvertTo-Json -Depth 8 -Compress
     Set-Secret $namespace 'vm-acme-harbor' @{'.dockerconfigjson'=$dockerConfig} 'kubernetes.io/dockerconfigjson'

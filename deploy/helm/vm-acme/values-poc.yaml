@@ -2,6 +2,7 @@ profile: poc
 replicaCount: 1
 application:
   connectionSecret: vm-acme-api-db
+  jwtSigningSecret: vm-acme-jwt
 migration:
   connectionSecret: vm-acme-migrator-db
   orchestration: helm

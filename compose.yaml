@@ -8,6 +8,9 @@ services:
     environment:
       ASPNETCORE_HTTP_PORTS: "8080"
       Persistence__Provider: InMemory
+      Authentication__Jwt__Issuer: vm-acme
+      Authentication__Jwt__Audience: vm-acme-api
+      Authentication__Jwt__SigningKey: local-compose-only-signing-key-change-me
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s

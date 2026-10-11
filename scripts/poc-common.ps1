@@ -85,6 +85,19 @@ function Wait-Http([string]$Uri,[int]$Seconds=180) {
     } while ((Get-Date) -lt $deadline)
     throw "Endpoint not ready within ${Seconds}s: $Uri. Check Pods, events and port-forward process."
 }
+function New-PocApiToken {
+    # Synthetic verifier identity only; mirrors the local PoC Kubernetes Secret.
+    $key='VmAcmePocJwtSigningKey-Only-For-Local-Testing-2026'
+    $now=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $header=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('{"alg":"HS256","typ":"JWT"}')).TrimEnd('=').Replace('+','-').Replace('/','_')
+    $payload=@{iss='vm-acme';aud='vm-acme-api';sub='poc-verifier';iat=$now;nbf=$now;exp=$now+600}|ConvertTo-Json -Compress
+    $body=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payload)).TrimEnd('=').Replace('+','-').Replace('/','_')
+    $content="$header.$body"
+    $hmac=[Security.Cryptography.HMACSHA256]::new([Text.Encoding]::UTF8.GetBytes($key))
+    try { $signature=[Convert]::ToBase64String($hmac.ComputeHash([Text.Encoding]::UTF8.GetBytes($content))).TrimEnd('=').Replace('+','-').Replace('/','_') }
+    finally { $hmac.Dispose() }
+    return "$content.$signature"
+}
 function Start-Forward([string]$Namespace,[string]$Service,[int]$Port,[int]$TargetPort) {
     # Always owns exactly this process; bounded readiness check; callers stop it in finally.
     # Run the matching cached client directly so stopping the tunnel also stops

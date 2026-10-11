@@ -40,6 +40,15 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.application.connectionSecret }}
                   key: {{ .Values.application.connectionKey }}
+            - name: Authentication__Jwt__Issuer
+              value: {{ .Values.application.jwtIssuer | quote }}
+            - name: Authentication__Jwt__Audience
+              value: {{ .Values.application.jwtAudience | quote }}
+            - name: Authentication__Jwt__SigningKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.jwtSigningSecret | quote }}
+                  key: {{ .Values.application.jwtSigningKey | quote }}
           startupProbe:
             httpGet: {path: /ready, port: http}
             failureThreshold: 40

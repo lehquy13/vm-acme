@@ -1,4 +1,5 @@
 @VmAcme.WebApi_HostAddress = http://localhost:5155
+@token = replace-with-valid-jwt
 
 GET {{VmAcme.WebApi_HostAddress}}/health
 Accept: application/json
@@ -7,6 +8,7 @@ Accept: application/json
 
 POST {{VmAcme.WebApi_HostAddress}}/api/work-items
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Try the template API"
@@ -16,8 +18,10 @@ Content-Type: application/json
 
 GET {{VmAcme.WebApi_HostAddress}}/api/work-items
 Accept: application/json
+Authorization: Bearer {{token}}
 
 ###
 
 POST {{VmAcme.WebApi_HostAddress}}/api/work-items/{{workItemId}}/complete
 Accept: application/json
+Authorization: Bearer {{token}}
