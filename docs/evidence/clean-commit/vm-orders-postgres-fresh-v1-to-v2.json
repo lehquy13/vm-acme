@@ -1,0 +1,92 @@
+{
+    "migratorImageIds":  [
+                             "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-orders-migrator@sha256:852af350444b43401bcef7a2592773b6608caa98ec9cac8904aa1f332e5a02eb"
+                         ],
+    "namespace":  "vm-orders-poc-postgres-orders-56c07dfe",
+    "schemaUpgradeExecuted":  true,
+    "gates":  [
+                  "V1 API image deployed",
+                  "create Todo in V1",
+                  "persisted Todo description and generated identifier",
+                  "persisted Todo description and generated identifier",
+                  "V2 artifact applies one pending upgrade migration",
+                  "V2 migration history recorded",
+                  "upgrade backfill preserves existing V1 row",
+                  "V2 API image Ready",
+                  "persisted Todo description and generated identifier",
+                  "create Todo in V2",
+                  "new V2 inserts use upgraded column default",
+                  "complete Todo on real database",
+                  "invalid input rejected",
+                  "emitted Prometheus counter inspected",
+                  "repeat deployment applies zero completed migrations",
+                  "actual failing migration prevents Helm upgrade",
+                  "failure is a database SQL exception",
+                  "migration Job failed as expected",
+                  "failed migration leaves API rollout unchanged",
+                  "failed transaction leaves migration history unchanged",
+                  "failed EF migration rolls back its schema change",
+                  "persisted Todo description and generated identifier",
+                  "completed Todo survives recovery",
+                  "Kubernetes node pulled published API image",
+                  "API uses the published V2 release artifact",
+                  "Kubernetes node pulled published migration image",
+                  "application and migration identities differ",
+                  "emitted API request logs inspected"
+              ],
+    "mechanism":  "Helm pre-install/pre-upgrade migration Job (Argo CD not executed)",
+    "provider":  "postgres",
+    "evidence":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-orders\\.poc\\postgres\\verify-20261012-001934",
+    "finalHistory":  "20261010000100_InitialCreate\n20261011000100_AddDeploymentRevision\n20261011121557_AddTodoAccounts",
+    "apiImageIds":  [
+                        "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-orders-api@sha256:c8b81d34b7989de273d77b6365154008fc7694624c370fbbc84a7fafdfa3c9fe"
+                    ],
+    "buildCommands":  [
+                          "docker build --target api --build-arg RELEASE_VERSION=1.0.0 --build-arg MIGRATION_RELEASE=1 -t 192.168.49.2:30002/vm-acme-poc/vm-orders-api:v1-c96a480f3538-20261012001722 .",
+                          "docker build --target migrator --build-arg RELEASE_VERSION=1.0.0 --build-arg MIGRATION_RELEASE=1 -t 192.168.49.2:30002/vm-acme-poc/vm-orders-migrator:v1-c96a480f3538-20261012001722 .",
+                          "docker build --target api --build-arg RELEASE_VERSION=2.0.0 --build-arg MIGRATION_RELEASE=2 -t 192.168.49.2:30002/vm-acme-poc/vm-orders-api:v2-c96a480f3538-20261012001722 .",
+                          "docker build --target migrator --build-arg RELEASE_VERSION=2.0.0 --build-arg MIGRATION_RELEASE=2 -t 192.168.49.2:30002/vm-acme-poc/vm-orders-migrator:v2-c96a480f3538-20261012001722 ."
+                      ],
+    "commands":  [
+                     "scripts/poc-up.ps1 -Provider postgres -ProofId orders-56c07dfe -DatabaseName p_orders_pg_56c07dfe -UseExistingInfrastructure",
+                     "scripts/poc-verify.ps1 -Provider postgres"
+                 ],
+    "databaseName":  "p_orders_pg_56c07dfe",
+    "scenario":  "fresh-v1-to-v2",
+    "proofId":  "orders-56c07dfe",
+    "sourceSHA":  "48ceb57f89e5502835e173546ac932aa99e57ccb",
+    "sourceFingerprint":  "c96a480f3538168c5850e93f37d40d0d744b96efd3fa4f2b501819fc95bc6f80",
+    "status":  "PASS",
+    "sourceDirty":  false,
+    "releaseImages":  [
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-orders-api:v1-c96a480f3538-20261012001722",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-orders-api@sha256:1cf3204b17aeca0e0bc4009f47296ec41efb750b59ece9a78e5dfdc881859c37",
+                              "target":  "api",
+                              "version":  "1"
+                          },
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-orders-migrator:v1-c96a480f3538-20261012001722",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-orders-migrator@sha256:66cc6a500e09a290e8db4785d33e162eee7406cf36b640a6ef3370440ccd0642",
+                              "target":  "migrator",
+                              "version":  "1"
+                          },
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-orders-api:v2-c96a480f3538-20261012001722",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-orders-api@sha256:c8b81d34b7989de273d77b6365154008fc7694624c370fbbc84a7fafdfa3c9fe",
+                              "target":  "api",
+                              "version":  "2"
+                          },
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-orders-migrator:v2-c96a480f3538-20261012001722",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-orders-migrator@sha256:852af350444b43401bcef7a2592773b6608caa98ec9cac8904aa1f332e5a02eb",
+                              "target":  "migrator",
+                              "version":  "2"
+                          }
+                      ],
+    "timeUtc":  "2026-10-11T17:20:41.6058976Z",
+    "initialHistory":  "20261010000100_InitialCreate\n20261011121557_AddTodoAccounts",
+    "initializedName":  "vm-orders",
+    "preInitSourceSha":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e",
+    "generatedTreeFingerprint":  "c96a480f3538168c5850e93f37d40d0d744b96efd3fa4f2b501819fc95bc6f80"
+}

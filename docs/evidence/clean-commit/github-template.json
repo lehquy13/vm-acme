@@ -1,0 +1,56 @@
+{
+    "originalGuard":  {
+                          "status":  "PASS",
+                          "run":  "https://github.com/lehquy13/vm-acme/actions/runs/38156555324",
+                          "result":  "skipped as required",
+                          "repo":  "lehquy13/vm-acme"
+                      },
+    "timeUtc":  "2026-10-11T16:53:16.6456313Z",
+    "subsequentPush":  {
+                           "status":  "PASS",
+                           "run":  "https://github.com/lehquy13/vm-order-service-proof-1011233949/actions/runs/38156628536",
+                           "repo":  "lehquy13/vm-order-service-proof-1011233949",
+                           "expectedHead":  "43d7fd8b466a214c1e276547dea7cf5b2013dfa3"
+                       },
+    "dispatch":  {
+                     "run":  "https://github.com/lehquy13/vm-orders-proof-1011233824/actions/runs/38156492729",
+                     "status":  "PASS",
+                     "headUnchanged":  true
+                 },
+    "automatic":  [
+                      {
+                          "creation":  "2026-10-11T16:38:27.5259687Z",
+                          "marker":  {
+                                         "repositoryId":  "1414550917",
+                                         "repositoryName":  "vm-orders-proof-1011233824",
+                                         "initializedAt":  "2026-10-11T16:40:01.7927150Z"
+                                     },
+                          "repo":  "lehquy13/vm-orders-proof-1011233824",
+                          "bootstrapRun":  "https://github.com/lehquy13/vm-orders-proof-1011233824/actions/runs/38156320303",
+                          "automaticTrigger":  "push",
+                          "initializedCommit":  "28ee780ae772b688f0b8726994aa1e3484cb499f",
+                          "status":  "PASS",
+                          "templateSourceSHA":  "65e9318b224662100e69dbc43a2751764bca5445"
+                      },
+                      {
+                          "creation":  "2026-10-11T16:39:55.1289018Z",
+                          "marker":  {
+                                         "repositoryId":  "1414552298",
+                                         "repositoryName":  "vm-order-service-proof-1011233949",
+                                         "initializedAt":  "2026-10-11T16:41:24.2321562Z"
+                                     },
+                          "repo":  "lehquy13/vm-order-service-proof-1011233949",
+                          "bootstrapRun":  "https://github.com/lehquy13/vm-order-service-proof-1011233949/actions/runs/38156417524",
+                          "automaticTrigger":  "push",
+                          "initializedCommit":  "258b27e09e3f8447d157515416812841f34f915f",
+                          "status":  "PASS",
+                          "templateSourceSHA":  "2e4d9139b1c8f5015068f9de17e3d794d285f577"
+                      }
+                  ],
+    "status":  "PASS",
+    "databaseCI":  {
+                       "status":  "PASS",
+                       "first":  "https://github.com/lehquy13/vm-orders-proof-1011233824/actions/runs/38156495166",
+                       "second":  "https://github.com/lehquy13/vm-order-service-proof-1011233949/actions/runs/38156613835"
+                   }
+}

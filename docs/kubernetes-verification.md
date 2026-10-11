@@ -1,3 +1,7 @@
+# Historical Kubernetes verification
+
+Superseded by [clean-commit review-gap proof](review-gap-proof.md), verified from source bf8fc5fbcf5cedc4947b2505edc63f094dbe022e. The following working-tree results are retained only as historical evidence.
+
 # Kubernetes verification — 11 October 2026
 
 

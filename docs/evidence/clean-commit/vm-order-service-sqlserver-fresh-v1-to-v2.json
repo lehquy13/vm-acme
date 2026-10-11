@@ -1,0 +1,92 @@
+{
+    "migratorImageIds":  [
+                             "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator@sha256:bfe67e0419791ccc02d815985f28eec111a4f58d00b586ff84bdc23e3893206b"
+                         ],
+    "namespace":  "vm-order-service-poc-sqlserver-order-service-56c07dfe",
+    "schemaUpgradeExecuted":  true,
+    "gates":  [
+                  "V1 API image deployed",
+                  "create Todo in V1",
+                  "persisted Todo description and generated identifier",
+                  "persisted Todo description and generated identifier",
+                  "V2 artifact applies one pending upgrade migration",
+                  "V2 migration history recorded",
+                  "upgrade backfill preserves existing V1 row",
+                  "V2 API image Ready",
+                  "persisted Todo description and generated identifier",
+                  "create Todo in V2",
+                  "new V2 inserts use upgraded column default",
+                  "complete Todo on real database",
+                  "invalid input rejected",
+                  "emitted Prometheus counter inspected",
+                  "repeat deployment applies zero completed migrations",
+                  "actual failing migration prevents Helm upgrade",
+                  "failure is a database SQL exception",
+                  "migration Job failed as expected",
+                  "failed migration leaves API rollout unchanged",
+                  "failed transaction leaves migration history unchanged",
+                  "failed EF migration rolls back its schema change",
+                  "persisted Todo description and generated identifier",
+                  "completed Todo survives recovery",
+                  "Kubernetes node pulled published API image",
+                  "API uses the published V2 release artifact",
+                  "Kubernetes node pulled published migration image",
+                  "application and migration identities differ",
+                  "emitted API request logs inspected"
+              ],
+    "mechanism":  "Helm pre-install/pre-upgrade migration Job (Argo CD not executed)",
+    "provider":  "sqlserver",
+    "evidence":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-order-service\\.poc\\sqlserver\\verify-20261012-003251",
+    "finalHistory":  "20261010000100_InitialCreate\n20261011000100_AddDeploymentRevision\n20261011121718_AddTodoAccounts",
+    "apiImageIds":  [
+                        "docker-pullable://192.168.49.2:30002/vm-acme-poc/vm-order-service-api@sha256:9e710f76e4d950c2ae2dad7788faeb83b50a8bd75bfa37419a47966f7fe72435"
+                    ],
+    "buildCommands":  [
+                          "docker build --target api --build-arg RELEASE_VERSION=1.0.0 --build-arg MIGRATION_RELEASE=1 -t 192.168.49.2:30002/vm-acme-poc/vm-order-service-api:v1-822709e30e3c-20261012003220 .",
+                          "docker build --target migrator --build-arg RELEASE_VERSION=1.0.0 --build-arg MIGRATION_RELEASE=1 -t 192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator:v1-822709e30e3c-20261012003220 .",
+                          "docker build --target api --build-arg RELEASE_VERSION=2.0.0 --build-arg MIGRATION_RELEASE=2 -t 192.168.49.2:30002/vm-acme-poc/vm-order-service-api:v2-822709e30e3c-20261012003220 .",
+                          "docker build --target migrator --build-arg RELEASE_VERSION=2.0.0 --build-arg MIGRATION_RELEASE=2 -t 192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator:v2-822709e30e3c-20261012003220 ."
+                      ],
+    "commands":  [
+                     "scripts/poc-up.ps1 -Provider sqlserver -ProofId order-service-56c07dfe -DatabaseName p_order_service_ss_56c07dfe -UseExistingInfrastructure",
+                     "scripts/poc-verify.ps1 -Provider sqlserver"
+                 ],
+    "databaseName":  "p_order_service_ss_56c07dfe",
+    "scenario":  "fresh-v1-to-v2",
+    "proofId":  "order-service-56c07dfe",
+    "sourceSHA":  "e2db2b0e1a9f968cf2f950114e5389531649a42e",
+    "sourceFingerprint":  "822709e30e3ca2ccc466190b0cedb489afd036f7fd0336fa752c1f9366388d7c",
+    "status":  "PASS",
+    "sourceDirty":  false,
+    "releaseImages":  [
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-api:v1-822709e30e3c-20261012003220",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-api@sha256:8b4cd575afafa6e7ddbd86d0ff8a5e5add9749863add1b2f3eb434197be0ded8",
+                              "target":  "api",
+                              "version":  "1"
+                          },
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator:v1-822709e30e3c-20261012003220",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator@sha256:a44c5dfed8581547c2eb25a97cc4be153c2dd636e0b49836a851a1b7eca4d0c2",
+                              "target":  "migrator",
+                              "version":  "1"
+                          },
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-api:v2-822709e30e3c-20261012003220",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-api@sha256:9e710f76e4d950c2ae2dad7788faeb83b50a8bd75bfa37419a47966f7fe72435",
+                              "target":  "api",
+                              "version":  "2"
+                          },
+                          {
+                              "reference":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator:v2-822709e30e3c-20261012003220",
+                              "digests":  "192.168.49.2:30002/vm-acme-poc/vm-order-service-migrator@sha256:bfe67e0419791ccc02d815985f28eec111a4f58d00b586ff84bdc23e3893206b",
+                              "target":  "migrator",
+                              "version":  "2"
+                          }
+                      ],
+    "timeUtc":  "2026-10-11T17:33:58.8613771Z",
+    "initialHistory":  "20261010000100_InitialCreate\n20261011121718_AddTodoAccounts",
+    "initializedName":  "vm-order-service",
+    "preInitSourceSha":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e",
+    "generatedTreeFingerprint":  "822709e30e3ca2ccc466190b0cedb489afd036f7fd0336fa752c1f9366388d7c"
+}

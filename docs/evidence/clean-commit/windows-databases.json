@@ -1,0 +1,11 @@
+{
+    "cleanCheckout":  true,
+    "timeUtc":  "2026-10-11T16:47:49.9617243Z",
+    "command":  "scripts/test-databases.ps1 -BundleRuntime win-x64 -EvidenceDirectory artifacts/database-proof",
+    "requiredProviders":  [
+                              "PostgreSql",
+                              "SqlServer"
+                          ],
+    "sourceSha":  "2e4d9139b1c8f5015068f9de17e3d794d285f577",
+    "status":  "PASS"
+}

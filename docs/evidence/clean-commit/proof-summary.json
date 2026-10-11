@@ -1,0 +1,60 @@
+{
+    "timeUtc":  "2026-10-11T17:35:18.1217685Z",
+    "proofRunId":  "56c07dfe",
+    "scenarios":  [
+                      "fresh V1 to V2",
+                      "preexisting V2 rerun",
+                      "failed migration / blocked rollout / transaction rollback / recovery"
+                  ],
+    "commands":  [
+                     "init.ps1 vm-orders",
+                     "init.ps1 vm-order-service",
+                     "scripts/poc-up.ps1 -Provider \u003cprovider\u003e -ProofId \u003cunique-name\u003e -DatabaseName \u003cnew-db\u003e -UseExistingInfrastructure",
+                     "scripts/poc-verify.ps1 -Provider \u003cprovider\u003e (fresh V1 to V2)",
+                     "scripts/poc-verify.ps1 -Provider \u003cprovider\u003e (preexisting V2 rerun)"
+                 ],
+    "results":  [
+                    {
+                        "name":  "vm-orders",
+                        "provider":  "postgres",
+                        "preInitSourceSHA":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e",
+                        "generatedSourceSHA":  "48ceb57f89e5502835e173546ac932aa99e57ccb",
+                        "generatedTreeFingerprint":  "c96a480f3538168c5850e93f37d40d0d744b96efd3fa4f2b501819fc95bc6f80",
+                        "freshReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-orders\\.poc\\postgres\\verify-20261012-001934\\report.json",
+                        "rerunReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-orders\\.poc\\postgres\\verify-20261012-002044\\report.json",
+                        "status":  "PASS"
+                    },
+                    {
+                        "name":  "vm-orders",
+                        "provider":  "sqlserver",
+                        "preInitSourceSHA":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e",
+                        "generatedSourceSHA":  "48ceb57f89e5502835e173546ac932aa99e57ccb",
+                        "generatedTreeFingerprint":  "c96a480f3538168c5850e93f37d40d0d744b96efd3fa4f2b501819fc95bc6f80",
+                        "freshReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-orders\\.poc\\sqlserver\\verify-20261012-002241\\report.json",
+                        "rerunReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-orders\\.poc\\sqlserver\\verify-20261012-002349\\report.json",
+                        "status":  "PASS"
+                    },
+                    {
+                        "name":  "vm-order-service",
+                        "provider":  "postgres",
+                        "preInitSourceSHA":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e",
+                        "generatedSourceSHA":  "e2db2b0e1a9f968cf2f950114e5389531649a42e",
+                        "generatedTreeFingerprint":  "822709e30e3ca2ccc466190b0cedb489afd036f7fd0336fa752c1f9366388d7c",
+                        "freshReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-order-service\\.poc\\postgres\\verify-20261012-002943\\report.json",
+                        "rerunReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-order-service\\.poc\\postgres\\verify-20261012-003053\\report.json",
+                        "status":  "PASS"
+                    },
+                    {
+                        "name":  "vm-order-service",
+                        "provider":  "sqlserver",
+                        "preInitSourceSHA":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e",
+                        "generatedSourceSHA":  "e2db2b0e1a9f968cf2f950114e5389531649a42e",
+                        "generatedTreeFingerprint":  "822709e30e3ca2ccc466190b0cedb489afd036f7fd0336fa752c1f9366388d7c",
+                        "freshReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-order-service\\.poc\\sqlserver\\verify-20261012-003251\\report.json",
+                        "rerunReport":  "C:\\Users\\Admin\\RiderProjects\\vm-acme\\.poc\\proof-workspaces-bf8fc5fb\\vm-order-service\\.poc\\sqlserver\\verify-20261012-003401\\report.json",
+                        "status":  "PASS"
+                    }
+                ],
+    "status":  "PASS",
+    "preInitSourceSHA":  "bf8fc5fbcf5cedc4947b2505edc63f094dbe022e"
+}

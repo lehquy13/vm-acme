@@ -3,18 +3,19 @@
 | Convention | Policy |
 |---|---|
 | Repository | Remove one leading `vm-`; validate letter-led segments and length before mutation. |
-| .NET | PascalCase identifier, e.g. `vm-order-service` ? `VmOrderService`. |
+| .NET | PascalCase identifier, e.g. `vm-order-service` -> `VmOrderService`. |
+| Solution | `vm-` plus the lower-case .NET brand, e.g. `vm-orderservice.slnx`. |
 | Deployment | DNS slug, e.g. `vm-order-service`; never duplicate `vm-`. |
 | Environment / metrics | `VM_ORDER_SERVICE` / `vm_order_service`. |
 | AppSettings | No vault calls. Validate the complete settings snapshot. |
 | KeyVaultRequired | Company dev default. Complete vault set required; failures abort startup. |
 | KeyVaultWithFallback | Explicit opt-in. Complete valid vault set wins; otherwise use a complete valid application settings set. |
-| Required secrets | API: database connection (unless explicit local InMemory) plus signing key =32 UTF-8 bytes. Runner/bundles: database connection only; never request JWT. |
-| Precedence | Tracked appsettings ? explicit secrets file ? environment ? complete vault snapshot. Vault partial results are never published. Runner `--connection` applies only in AppSettings; prefer shared configuration for every path. |
+| Required secrets | API: database connection (unless explicit local InMemory) plus signing key >=32 UTF-8 bytes. Runner/bundles: database connection only; never request JWT. |
+| Precedence | Tracked appsettings -> explicit secrets file -> environment -> complete vault snapshot. Vault partial results are never published. Runner `--connection` applies only in AppSettings; prefer shared configuration for every path. |
 | File paths | Absolute `Secrets__FallbackFile` is recommended. Relative paths resolve against absolute `Secrets__BaseDirectory`, defaulting to `AppContext.BaseDirectory`, never the current working directory. |
 | Identities | Separate API/migrator service accounts, client IDs, vault connection secrets, and fallback Kubernetes Secrets. |
 | Loading / rotation | Startup-only snapshot. Restart API pods and rerun runner/bundles after rotation; no live reload. |
-| Bounds / diagnostics | Whole vault phase =30 seconds, =3 SDK retries, request network timeout 5 seconds. Sanitized warning; `secrets.fallback.activations` meter and `vm_acme_secret_fallback_active` API indicator. No values or service error payloads logged. |
+| Bounds / diagnostics | Whole vault phase <=30 seconds, <=3 SDK retries, request network timeout 5 seconds. Sanitized warning; `secrets.fallback.activations` meter and `vm_acme_secret_fallback_active` API indicator. No values or service error payloads logged. |
 
 ## Operator fallback file
 

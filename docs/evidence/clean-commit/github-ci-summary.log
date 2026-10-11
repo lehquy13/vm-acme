@@ -1,0 +1,6 @@
+2026-10-11T17:15:30.5523377Z PASS bundle and custom migrator explicit file from unrelated working directory provider=PostgreSql
+2026-10-11T17:15:37.6908735Z PASS bundle and custom migrator explicit file from unrelated working directory provider=SqlServer
+2026-10-11T17:15:46.0073194Z Passed!  - Failed:     0, Passed:    11, Skipped:     0, Total:    11, Duration: 267 ms - VmAcme.UnitTests.dll (net10.0)
+2026-10-11T17:15:50.5583345Z Passed!  - Failed:     0, Passed:     5, Skipped:     0, Total:     5, Duration: 116 ms - VmAcme.ArchitectureTests.dll (net10.0)
+2026-10-11T17:16:00.8061189Z Passed!  - Failed:     0, Passed:    71, Skipped:     0, Total:    71, Duration: 10 s - VmAcme.IntegrationTests.dll (net10.0)
+2026-10-11T17:16:01.0514651Z PASS required database test rows=8
