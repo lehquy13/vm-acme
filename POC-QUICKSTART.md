@@ -24,7 +24,7 @@ VERIFY PASS provider=sqlserver gates=... evidence=.../.poc/sqlserver/verify-...
 
 Evidence is in `.poc/<provider>/up/` and `.poc/<provider>/verify-<timestamp>/`: image build/push/pull logs, migration counts/history, created row, backfill, emitted metrics, API logs, Pod image IDs, events and `report.json`. `.poc/<provider>/latest-report.txt` points to the newest passing report. Do not commit `.poc`; bootstrap outputs may include operational details. The committed execution status is recorded in `docs/kubernetes-verification.md`.
 
-The tested deployment mechanism is **Helm pre-install/pre-upgrade migration Jobs**. Jobs are retained until the next attempt for logs. The verifier registers a PoC-only pending EF migration that creates a probe table and then executes invalid SQL. It confirms rollback of that table, unchanged history, a failed Job and unchanged API pod-template/generation, then redeploys V2 to recover. The failure migration is registered only when both explicit PoC flags are enabled. V2 adds an unmapped deployment metadata column through nullable addition, backfill and non-null/default enforcement; it does not represent an arbitrary production schema change. The existing WorkItem title/identifier/status are verified across upgrade and process restart. Decimal, UTC timestamp, relationship, baseline-adoption, drift and SSDT timing comparisons are outside these sample-feature gates and are not claimed as verified.
+The previously tested deployment mechanism is **Helm pre-install/pre-upgrade migration Jobs**. Jobs are retained until the next attempt for logs. The verifier registers a PoC-only pending EF migration that creates a probe table and executes invalid SQL, then checks rollback, history and unchanged API rollout. The failure migration requires both PoC flags. The verifier now registers/logs in a real user and checks Todo description, ID and completion across restart/upgrade. V1 targets the Todo/account migration; V2 targets latest so it applies its pending deployment revision. That immutable revision still modifies historical WorkItems; separate legacy SQL fixtures verify its backfill/default. The updated Kubernetes verifier has not been rerun as part of the Todo change; local disposable PostgreSQL/SQL Server tests verify schema, relationships, timestamps, ownership and concurrency. Decimal, baseline-adoption, drift and SSDT timing comparisons remain outside these gates.
 
 ## Access
 
@@ -33,7 +33,7 @@ The publishing engine is the **isolated Minikube node's Docker daemon**, control
 ```powershell
 $env:PATH="$env:LOCALAPPDATA\vm-acme-poc\bin;$env:PATH"
 minikube -p vm-acme-poc kubectl -- -n vm-acme-poc-postgres port-forward svc/vm-acme 18080:8080
-# http://127.0.0.1:18080/health, /ready, /version, /metrics, /api/work-items
+# http://127.0.0.1:18080/health, /ready, /version, /metrics, /api/todos
 minikube -p vm-acme-poc kubectl -- -n vm-acme-poc-registry port-forward svc/harbor 18082:80
 # Harbor browser: http://127.0.0.1:18082
 ```

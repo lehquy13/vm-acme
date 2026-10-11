@@ -39,7 +39,7 @@ try {
     }
     $config=[pscustomobject]$config
     Write-Host "Deploying V1 ($Provider); migrations gate API startup..."
-    Deploy-Application $config "v1-$buildId" '20261010000100_InitialCreate'
+    Deploy-Application $config "v1-$buildId" (Todo-MigrationTarget $Provider)
     Migration-Logs $config "$evidence/migration-v1.txt" | Out-Null
     Write-Utf8 (Join-Path $State "$Provider.json") ($config|ConvertTo-Json)
     Write-Host "UP PASS provider=$Provider namespace=$namespace. Run poc-verify.sh; evidence: .poc/$Provider/up"

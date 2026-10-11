@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using VmAcme.Common;
 
 namespace VmAcme.Behaviors;
 
@@ -17,16 +18,21 @@ public sealed class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            var response = await next();
-            logger.LogInformation("MediatR request {RequestName} completed in {ElapsedMilliseconds} ms",
-                requestName, stopwatch.Elapsed.TotalMilliseconds);
+            var response = await next(cancellationToken);
+            logger.LogInformation("MediatR request {RequestName} completed with {Outcome} in {ElapsedMilliseconds} ms",
+                requestName, response is IResultOutcome { IsFailure: true } ? "Failure" : "Success",
+                stopwatch.Elapsed.TotalMilliseconds);
             return response;
         }
         catch (Exception exception)
         {
             logger.LogError(exception, "MediatR request {RequestName} failed after {ElapsedMilliseconds} ms",
                 requestName, stopwatch.Elapsed.TotalMilliseconds);
-            throw;
+            if (exception is OperationCanceledException canceled)
+                throw new OperationCanceledException($"MediatR request {requestName} was canceled.", canceled,
+                    canceled.CancellationToken);
+
+            throw new InvalidOperationException($"MediatR request {requestName} failed.", exception);
         }
     }
 }

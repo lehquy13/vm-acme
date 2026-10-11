@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VmAcme.Persistence;
+using VmAcme.Todos;
+using VmAcme.Users;
 using VmAcme.WorkItems;
 
 namespace VmAcme;
@@ -18,6 +20,8 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(provider) ||
             string.Equals(provider, "InMemory", StringComparison.OrdinalIgnoreCase))
         {
+            services.AddSingleton<ITodoRepository, InMemoryTodoRepository>();
+            services.AddSingleton<IUserRepository, InMemoryUserRepository>();
             services.AddSingleton<InMemoryWorkItemRepository>();
             services.AddSingleton<IWorkItemRepository>(serviceProvider =>
                 serviceProvider.GetRequiredService<InMemoryWorkItemRepository>());
@@ -48,6 +52,8 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IWorkItemRepository, EfWorkItemRepository>();
+        services.AddScoped<ITodoRepository, EfTodoRepository>();
+        services.AddScoped<IUserRepository, EfUserRepository>();
         return services;
     }
 }

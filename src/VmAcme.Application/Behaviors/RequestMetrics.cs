@@ -27,9 +27,11 @@ public sealed class RequestMetrics
         output.WriteLine("# TYPE vm_acme_mediatr_request_failures_total counter");
         foreach (var (name, metric) in _requests.OrderBy(pair => pair.Key, StringComparer.Ordinal))
         {
-            var label = name.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+            var label = name.Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("\"", "\\\"", StringComparison.Ordinal);
             output.WriteLine($"vm_acme_mediatr_requests_total{{request=\"{label}\"}} {metric.Count}");
-            output.WriteLine($"vm_acme_mediatr_request_duration_milliseconds_sum{{request=\"{label}\"}} {metric.TotalMilliseconds.ToString(CultureInfo.InvariantCulture)}");
+            output.WriteLine(
+                $"vm_acme_mediatr_request_duration_milliseconds_sum{{request=\"{label}\"}} {metric.TotalMilliseconds.ToString(CultureInfo.InvariantCulture)}");
             output.WriteLine($"vm_acme_mediatr_request_failures_total{{request=\"{label}\"}} {metric.Failures}");
         }
 

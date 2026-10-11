@@ -1,27 +1,45 @@
-@VmAcme.WebApi_HostAddress = http://localhost:5155
-@token = replace-with-valid-jwt
+@host = http://localhost:5155
+@token = replace-with-login-accessToken
+@userId = replace-with-registration-id
+@todoId = replace-with-created-todo-id
 
-GET {{VmAcme.WebApi_HostAddress}}/health
-Accept: application/json
+GET {{host}}/health
 
-###
+### Register once (duplicate email returns 409)
+POST {{host}}/api/users/register
+Content-Type: application/json
 
-POST {{VmAcme.WebApi_HostAddress}}/api/work-items
+{ "email": "todo@example.com", "firstName": "Todo", "lastName": "Owner", "password": "Strong-password-123!" }
+
+### Copy accessToken into @token
+POST {{host}}/api/users/login
+Content-Type: application/json
+
+{ "email": "todo@example.com", "password": "Strong-password-123!" }
+
+### Permission-protected own profile
+GET {{host}}/api/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Owner comes from the token; priority Normal=0, Low=1, Medium=2, High=3, Top=4
+POST {{host}}/api/todos
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
-{
-  "title": "Try the template API"
-}
+{ "description": "Try the Todo API", "priority": 3, "dueDate": null, "labels": ["example"] }
 
-###
-
-GET {{VmAcme.WebApi_HostAddress}}/api/work-items
-Accept: application/json
+### List your Todos
+GET {{host}}/api/todos
 Authorization: Bearer {{token}}
 
-###
+### Get one
+GET {{host}}/api/todos/{{todoId}}
+Authorization: Bearer {{token}}
 
-POST {{VmAcme.WebApi_HostAddress}}/api/work-items/{{workItemId}}/complete
-Accept: application/json
+### Repeated completion returns 409
+POST {{host}}/api/todos/{{todoId}}/complete
+Authorization: Bearer {{token}}
+
+### Delete returns 204
+DELETE {{host}}/api/todos/{{todoId}}
 Authorization: Bearer {{token}}

@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using MediatR;
+using VmAcme.Common;
 
 namespace VmAcme.Behaviors;
 
-public sealed class MetricsBehavior<TRequest, TResponse>(RequestMetrics metrics) : IPipelineBehavior<TRequest, TResponse>
+public sealed class MetricsBehavior<TRequest, TResponse>(RequestMetrics metrics)
+    : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     public async Task<TResponse> Handle(
@@ -15,7 +17,9 @@ public sealed class MetricsBehavior<TRequest, TResponse>(RequestMetrics metrics)
         var failed = false;
         try
         {
-            return await next();
+            var response = await next(cancellationToken);
+            failed = response is IResultOutcome { IsFailure: true };
+            return response;
         }
         catch
         {

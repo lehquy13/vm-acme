@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
 using VmAcme;
+using VmAcme.Migrations.PostgreSql;
 using VmAcme.Persistence;
 
 MigrationOptions? options;
@@ -32,7 +33,7 @@ try
     switch (migrationOptions.Provider)
     {
         case "PostgreSql":
-            _ = typeof(VmAcme.Migrations.PostgreSql.InitialCreate).Assembly;
+            _ = typeof(InitialCreate).Assembly;
             dbOptions.UseNpgsql(migrationOptions.ConnectionString, provider =>
                 provider.MigrationsAssembly("VmAcme.Migrations.PostgreSql"));
             break;

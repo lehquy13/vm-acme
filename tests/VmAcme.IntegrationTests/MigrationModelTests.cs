@@ -38,5 +38,8 @@ public sealed class MigrationModelTests
         var script = dbContext.GetService<IMigrator>().GenerateScript();
         Assert.Contains("CREATE TABLE", script, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("WorkItems", script, StringComparison.Ordinal);
+        Assert.Contains("TodoItems", script, StringComparison.Ordinal);
+        Assert.Contains("Users", script, StringComparison.Ordinal);
+        Assert.DoesNotContain("DROP TABLE", script, StringComparison.OrdinalIgnoreCase);
     }
 }
