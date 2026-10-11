@@ -72,6 +72,17 @@ public sealed class SecretResolutionPolicyTests
         Assert.Equal("AppSettings", config["Secrets:ResolvedSource"]);
     }
 
+    [Fact]
+    public async Task Missing_workload_identity_configuration_can_activate_explicit_fallback()
+    {
+        var config = Settings("KeyVaultWithFallback");
+        var warnings = new List<string>();
+        await SecretBootstrap.LoadAsync(config, true, warning: warnings.Add);
+        Assert.Equal("Fallback", config["Secrets:ResolvedSource"]);
+        Assert.Single(warnings);
+        Assert.DoesNotContain("sentinel", warnings[0]);
+    }
+
     [Theory]
     [InlineData("denied")]
     [InlineData("missing")]

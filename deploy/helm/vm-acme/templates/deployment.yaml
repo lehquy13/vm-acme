@@ -49,7 +49,7 @@ spec:
             {{- end }}
             - name: Persistence__Provider
               value: {{ .Values.persistence.provider | quote }}
-            {{- if eq .Values.secrets.mode "AppSettings" }}
+            {{- if and (eq .Values.secrets.mode "AppSettings") (not .Values.application.fallbackSecretName) }}
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
@@ -60,7 +60,7 @@ spec:
               value: {{ .Values.application.jwtIssuer | quote }}
             - name: Authentication__Jwt__Audience
               value: {{ .Values.application.jwtAudience | quote }}
-            {{- if eq .Values.secrets.mode "AppSettings" }}
+            {{- if and (eq .Values.secrets.mode "AppSettings") (not .Values.application.fallbackSecretName) }}
             - name: Authentication__Jwt__SigningKey
               valueFrom:
                 secretKeyRef:

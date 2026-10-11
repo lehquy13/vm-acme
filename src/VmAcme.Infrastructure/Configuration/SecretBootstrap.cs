@@ -61,25 +61,26 @@ public static class SecretBootstrap
         var signingName = includeJwt ? Required(configuration, "Secrets:JwtSecret") : null;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(30));
-        if (readSecret is null)
-        {
-            var client = new SecretClient(vault, new WorkloadIdentityCredential(), new SecretClientOptions
-            {
-                Retry = { MaxRetries = 3, NetworkTimeout = TimeSpan.FromSeconds(5) }
-            });
-            readSecret = async (_, name, token) =>
-                (await client.GetSecretAsync(name, cancellationToken: token)).Value.Value;
-        }
-
         try
         {
+            if (readSecret is null)
+            {
+                var client = new SecretClient(vault, new WorkloadIdentityCredential(), new SecretClientOptions
+                {
+                    Retry = { MaxRetries = 3, NetworkTimeout = TimeSpan.FromSeconds(5) }
+                });
+                readSecret = async (_, name, token) =>
+                    (await client.GetSecretAsync(name, cancellationToken: token)).Value.Value;
+            }
             var values = new Dictionary<string, string?> { ["ConnectionStrings:DefaultConnection"] = await Read(connectionName) };
             if (signingName is not null) values["Authentication:Jwt:SigningKey"] = await Read(signingName);
             var candidate = new ConfigurationBuilder().AddConfiguration(configuration).AddInMemoryCollection(values).Build();
             Publish(Validate(candidate, includeJwt), "KeyVault");
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception)
         {
+            if (cancellationToken.IsCancellationRequested)
+                throw new OperationCanceledException("Secret resolution canceled.", cancellationToken);
             if (mode != "KeyVaultWithFallback") throw new InvalidOperationException("Required Key Vault configuration could not be resolved.");
             var values = LoadFallback();
             Publish(values, "Fallback");

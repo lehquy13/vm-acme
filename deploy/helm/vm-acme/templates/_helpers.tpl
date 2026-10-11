@@ -32,7 +32,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $_ := required "secrets.vaultUri is required" .Values.secrets.vaultUri -}}
 {{- $_ := required "application.vaultConnectionSecret is required" .Values.application.vaultConnectionSecret -}}
 {{- $_ := required "application.vaultJwtSecret is required" .Values.application.vaultJwtSecret -}}
-{{- else -}}
+{{- else if not .Values.application.fallbackSecretName -}}
 {{- $_ := required "application.connectionSecret is required" .Values.application.connectionSecret -}}
 {{- end -}}
 {{- if eq .Values.secrets.mode "KeyVaultWithFallback" -}}
@@ -47,6 +47,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $_ := required "AppSettings fallback requires migration.fallbackSecretName" .Values.migration.fallbackSecretName -}}
 {{- if eq .Values.application.fallbackSecretName .Values.migration.fallbackSecretName -}}
 {{- fail "API and migrator require separate fallback secrets" -}}
+{{- end -}}
+{{- end -}}
+{{- if or .Values.application.fallbackSecretName .Values.migration.fallbackSecretName -}}
+{{- if ne .Values.secrets.fallbackFile "/etc/vm-acme/secrets/appsettings.secrets.json" -}}
+{{- fail "secrets.fallbackFile must match the read-only mount /etc/vm-acme/secrets/appsettings.secrets.json" -}}
 {{- end -}}
 {{- end -}}
 {{- if .Values.migration.enabled -}}
@@ -73,7 +78,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if eq .Values.application.vaultConnectionSecret .Values.migration.vaultConnectionSecret -}}
 {{- fail "API and migrator require separate vault connection secrets" -}}
 {{- end -}}
-{{- else -}}
+{{- else if not .Values.migration.fallbackSecretName -}}
 {{- $_ := required "migration.connectionSecret is required" .Values.migration.connectionSecret -}}
 {{- if eq .Values.application.connectionSecret .Values.migration.connectionSecret -}}
 {{- fail "API and migrator require separate connection secrets" -}}

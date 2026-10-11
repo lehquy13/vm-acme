@@ -50,7 +50,7 @@ spec:
             {{- end }}
             - name: Persistence__Provider
               value: {{ .Values.persistence.provider | quote }}
-            {{- if eq .Values.secrets.mode "AppSettings" }}
+            {{- if and (eq .Values.secrets.mode "AppSettings") (not .Values.migration.fallbackSecretName) }}
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
