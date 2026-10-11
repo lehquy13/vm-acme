@@ -164,7 +164,7 @@ function Initialize-PocDatabase([string]$Provider,[string]$Database) {
         Database-Query $Provider "GRANT USAGE ON SCHEMA public TO $ApiDbUser; ALTER DEFAULT PRIVILEGES FOR ROLE $MigratorDbUser IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO $ApiDbUser;" $Database | Out-Null
         return
     }
-    $exists=(Database-Query $Provider "SELECT CASE WHEN DB_ID('$Database') IS NULL THEN 0 ELSE 1 END;" 'master').Trim()
+    $exists=(Database-Query $Provider "SET NOCOUNT ON; SELECT CASE WHEN DB_ID('$Database') IS NULL THEN 0 ELSE 1 END;" 'master').Trim()
     if($exists -ne '0'){throw "Refusing to reuse existing proof database '$Database'; choose a new name."}
     $sql="CREATE DATABASE [$Database];`nGO`nUSE [$Database];`nGO`nIF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name='$MigratorDbUser') CREATE USER [$MigratorDbUser] FOR LOGIN [$MigratorDbUser];`nIF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name='$ApiDbUser') CREATE USER [$ApiDbUser] FOR LOGIN [$ApiDbUser];`nALTER ROLE db_owner ADD MEMBER [$MigratorDbUser];`nALTER ROLE db_datareader ADD MEMBER [$ApiDbUser];`nALTER ROLE db_datawriter ADD MEMBER [$ApiDbUser];"
     $encoded=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($sql))
