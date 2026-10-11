@@ -1,0 +1,18 @@
+{{- include "vm-acme.validate" . -}}
+{{- if eq .Values.phase "prerequisites" }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.application.serviceAccount }}
+  annotations:
+    {{- toYaml .Values.application.serviceAccountAnnotations | nindent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.migration.serviceAccount }}
+  annotations:
+    {{- toYaml .Values.migration.serviceAccountAnnotations | nindent 4 }}
+automountServiceAccountToken: false
+{{- end }}

@@ -1,0 +1,23 @@
+@VmAcme.WebApi_HostAddress = http://localhost:5155
+
+GET {{VmAcme.WebApi_HostAddress}}/health
+Accept: application/json
+
+###
+
+POST {{VmAcme.WebApi_HostAddress}}/api/work-items
+Content-Type: application/json
+
+{
+  "title": "Try the template API"
+}
+
+###
+
+GET {{VmAcme.WebApi_HostAddress}}/api/work-items
+Accept: application/json
+
+###
+
+POST {{VmAcme.WebApi_HostAddress}}/api/work-items/{{workItemId}}/complete
+Accept: application/json

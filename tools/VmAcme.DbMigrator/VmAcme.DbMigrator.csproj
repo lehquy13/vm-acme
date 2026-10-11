@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\VmAcme.Infrastructure\VmAcme.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\migrations\VmAcme.Migrations.PostgreSql\VmAcme.Migrations.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\migrations\VmAcme.Migrations.SqlServer\VmAcme.Migrations.SqlServer.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

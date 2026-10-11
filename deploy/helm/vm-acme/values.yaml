@@ -1,0 +1,57 @@
+profile: common
+# Deploy prerequisite identities as a separate release before the application.
+phase: application
+fullnameOverride: vm-acme
+replicaCount: 1
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: Always
+imagePullSecrets: []
+persistence:
+  provider: PostgreSql
+application:
+  serviceAccount: vm-acme-api
+  connectionSecret: ""
+  connectionKey: connection
+  podLabels: {}
+  podAnnotations: {}
+  serviceAccountAnnotations: {}
+migration:
+  enabled: true
+  orchestration: helm
+  image:
+    repository: ""
+    tag: ""
+  serviceAccount: vm-acme-migrator
+  serviceAccountAnnotations: {}
+  connectionSecret: ""
+  connectionKey: connection
+  podLabels: {}
+  podAnnotations: {}
+  target: ""
+  failForPoc: false
+  activeDeadlineSeconds: 240
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: "1", memory: 512Mi}
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {cpu: "1", memory: 512Mi}
+service:
+  type: ClusterIP
+  port: 8080
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  host: ""
+  tls: []
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities: {drop: [ALL]}
+nodeSelector: {}
+tolerations: []
+affinity: {}

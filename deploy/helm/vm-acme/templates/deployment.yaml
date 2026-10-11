@@ -1,0 +1,59 @@
+{{- if eq .Values.phase "application" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vm-acme.fullname" . }}
+  labels: {{- include "vm-acme.labels" . | nindent 4 }}
+  {{- if eq .Values.migration.orchestration "argocd" }}
+  annotations: {argocd.argoproj.io/sync-wave: "0"}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels: {{- include "vm-acme.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vm-acme.labels" . | nindent 8 }}
+        {{- with .Values.application.podLabels }}{{ toYaml . | nindent 8 }}{{ end }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+        {{- with .Values.application.podAnnotations }}{{ toYaml . | nindent 8 }}{{ end }}
+    spec:
+      serviceAccountName: {{ .Values.application.serviceAccount }}
+      imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 8 }}
+      securityContext: {seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          ports: [{name: http, containerPort: 8080}]
+          env:
+            - name: Persistence__Provider
+              value: {{ .Values.persistence.provider | quote }}
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.application.connectionSecret }}
+                  key: {{ .Values.application.connectionKey }}
+          startupProbe:
+            httpGet: {path: /ready, port: http}
+            failureThreshold: 40
+            periodSeconds: 3
+          readinessProbe:
+            httpGet: {path: /ready, port: http}
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {}}]
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
+{{- end }}

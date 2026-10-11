@@ -1,0 +1,27 @@
+# Substitute these required inputs before applying to an authorized Argo CD instance.
+# Bootstrap namespace, database/registry secrets and identities BEFORE syncing.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vm-acme-dev
+  namespace: ${ARGOCD_NAMESPACE}
+spec:
+  project: ${ARGOCD_PROJECT}
+  source:
+    repoURL: ${DEV_REPO_URL}
+    targetRevision: ${DEV_GIT_REVISION}
+    path: deploy/helm/vm-acme
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+        - ${DEV_OVERLAY_FILE}
+      parameters:
+        - name: migration.orchestration
+          value: argocd
+  destination:
+    server: ${DEV_CLUSTER_SERVER}
+    namespace: ${DEV_NAMESPACE}
+  # Deliberately manual sync until company rollout policy is supplied.
+  syncPolicy:
+    syncOptions: [CreateNamespace=false]

@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: vm-acme-db-bootstrap, namespace: vm-acme-poc-infra}
+data:
+  # Intentionally public PoC-only credentials. Never apply to company infrastructure.
+  postgres.sql: |
+    SELECT 'CREATE ROLE acme_api LOGIN PASSWORD ''VmAcmePoc!Api2026'''
+    WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'acme_api') \gexec
+    GRANT CONNECT ON DATABASE acme TO acme_api;
+    GRANT USAGE ON SCHEMA public TO acme_api;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO acme_api;
+    ALTER DEFAULT PRIVILEGES FOR ROLE acme_migrator IN SCHEMA public
+      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO acme_api;
+  sqlserver.sql: |
+    IF DB_ID('acme') IS NULL CREATE DATABASE acme;
+    GO
+    IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'acme_migrator')
+      CREATE LOGIN acme_migrator WITH PASSWORD = 'VmAcmePoc!Migration2026', CHECK_POLICY = OFF;
+    IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'acme_api')
+      CREATE LOGIN acme_api WITH PASSWORD = 'VmAcmePoc!Api2026', CHECK_POLICY = OFF;
+    GO
+    USE acme;
+    GO
+    IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'acme_migrator')
+      CREATE USER acme_migrator FOR LOGIN acme_migrator;
+    IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'acme_api')
+      CREATE USER acme_api FOR LOGIN acme_api;
+    ALTER ROLE db_owner ADD MEMBER acme_migrator;
+    ALTER ROLE db_datareader ADD MEMBER acme_api;
+    ALTER ROLE db_datawriter ADD MEMBER acme_api;
+    GO
+---
+apiVersion: v1
+kind: Service
+metadata: {name: postgres, namespace: vm-acme-poc-infra}
+spec:
+  selector: {app: vm-acme-poc-postgres}
+  ports: [{port: 5432, targetPort: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: postgres, namespace: vm-acme-poc-infra}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: {app: vm-acme-poc-postgres}
+  template:
+    metadata:
+      labels: {app: vm-acme-poc-postgres}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {fsGroup: 999}
+      containers:
+        - name: postgres
+          image: postgres:17.6
+          env:
+            - {name: POSTGRES_DB, value: acme}
+            - {name: POSTGRES_USER, value: acme_migrator}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: vm-acme-poc-databases, key: postgresPassword}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          ports: [{containerPort: 5432}]
+          readinessProbe:
+            exec: {command: [pg_isready, -U, acme_migrator, -d, acme]}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: bootstrap, mountPath: /bootstrap, readOnly: true}
+      volumes:
+        - name: bootstrap
+          configMap: {name: vm-acme-db-bootstrap}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests: {storage: 2Gi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: sqlserver, namespace: vm-acme-poc-infra}
+spec:
+  selector: {app: vm-acme-poc-sqlserver}
+  ports: [{port: 1433, targetPort: 1433}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: sqlserver, namespace: vm-acme-poc-infra}
+spec:
+  serviceName: sqlserver
+  replicas: 1
+  selector:
+    matchLabels: {app: vm-acme-poc-sqlserver}
+  template:
+    metadata:
+      labels: {app: vm-acme-poc-sqlserver}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {fsGroup: 10001}
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-CU21-ubuntu-22.04
+          env:
+            - {name: ACCEPT_EULA, value: "Y"}
+            - {name: MSSQL_PID, value: Developer}
+            - {name: MSSQL_MEMORY_LIMIT_MB, value: "2048"}
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: vm-acme-poc-databases, key: sqlAdminPassword}
+          ports: [{containerPort: 1433}]
+          startupProbe:
+            tcpSocket: {port: 1433}
+            failureThreshold: 100
+            periodSeconds: 5
+          readinessProbe:
+            exec:
+              command: [sh, -c, 'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -Q "SELECT 1" -o /dev/null']
+            periodSeconds: 10
+          resources:
+            requests: {cpu: 500m, memory: 2Gi}
+            limits: {cpu: "2", memory: 3Gi}
+          volumeMounts:
+            - {name: data, mountPath: /var/opt/mssql}
+            - {name: bootstrap, mountPath: /bootstrap, readOnly: true}
+      volumes:
+        - name: bootstrap
+          configMap: {name: vm-acme-db-bootstrap}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests: {storage: 4Gi}

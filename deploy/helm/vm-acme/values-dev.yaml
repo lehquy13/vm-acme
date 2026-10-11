@@ -1,0 +1,15 @@
+profile: dev
+# REQUIRED: supply private image repositories + immutable tags, external connection
+# secrets, registry pull secret, and identity annotations in a company-owned overlay.
+replicaCount: 2
+resources:
+  requests: {cpu: 250m, memory: 256Mi}
+  limits: {cpu: "2", memory: 1Gi}
+migration:
+  orchestration: helm
+  activeDeadlineSeconds: 600
+  resources:
+    requests: {cpu: 250m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+ingress:
+  enabled: false

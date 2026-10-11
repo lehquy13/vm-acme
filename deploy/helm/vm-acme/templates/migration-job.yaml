@@ -1,0 +1,52 @@
+{{- if and (eq .Values.phase "application") .Values.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "vm-acme.fullname" . }}-migrate
+  annotations:
+    {{- if eq .Values.migration.orchestration "helm" }}
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-10"
+    helm.sh/hook-delete-policy: before-hook-creation
+    {{- else }}
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    {{- end }}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ .Values.migration.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels: {{ toYaml .Values.migration.podLabels | nindent 8 }}
+      annotations: {{ toYaml .Values.migration.podAnnotations | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.migration.serviceAccount }}
+      restartPolicy: Never
+      imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 8 }}
+      securityContext: {seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: migrate
+          image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          resources: {{ toYaml .Values.migration.resources | nindent 12 }}
+          env:
+            - name: Persistence__Provider
+              value: {{ .Values.persistence.provider | quote }}
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.migration.connectionSecret }}
+                  key: {{ .Values.migration.connectionKey }}
+            - name: MIGRATION_TARGET
+              value: {{ .Values.migration.target | quote }}
+            - name: MIGRATION_TIMEOUT_SECONDS
+              value: {{ sub .Values.migration.activeDeadlineSeconds 15 | quote }}
+            - name: POC_MODE
+              value: {{ eq .Values.profile "poc" | quote }}
+            - name: POC_FAIL_MIGRATION
+              value: {{ .Values.migration.failForPoc | quote }}
+          volumeMounts: [{name: tmp, mountPath: /tmp}]
+      volumes: [{name: tmp, emptyDir: {}}]
+{{- end }}
