@@ -40,6 +40,7 @@ function Run([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds=900, [stri
     $info.FileName=(Get-Command $Exe -ErrorAction Stop).Source
     $info.Arguments=($Arguments | ForEach-Object{Quote-NativeArgument $_}) -join ' '
     $info.UseShellExecute=$false
+    $info.WorkingDirectory=(Get-Location).ProviderPath
     $info.CreateNoWindow=$true
     $info.RedirectStandardOutput=$true
     $info.RedirectStandardError=$true
