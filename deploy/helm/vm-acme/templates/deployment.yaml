@@ -35,7 +35,11 @@ spec:
           env:
             - name: Secrets__Mode
               value: {{ .Values.secrets.mode | quote }}
-            {{- if eq .Values.secrets.mode "KeyVault" }}
+            {{- if and (ne .Values.secrets.mode "KeyVaultRequired") .Values.application.fallbackSecretName }}
+            - name: Secrets__FallbackFile
+              value: {{ .Values.secrets.fallbackFile | quote }}
+            {{- end }}
+            {{- if ne .Values.secrets.mode "AppSettings" }}
             - name: Secrets__VaultUri
               value: {{ .Values.secrets.vaultUri | quote }}
             - name: Secrets__ConnectionSecret
@@ -45,7 +49,7 @@ spec:
             {{- end }}
             - name: Persistence__Provider
               value: {{ .Values.persistence.provider | quote }}
-            {{- if eq .Values.secrets.mode "Environment" }}
+            {{- if eq .Values.secrets.mode "AppSettings" }}
             - name: ConnectionStrings__DefaultConnection
               valueFrom:
                 secretKeyRef:
@@ -56,7 +60,7 @@ spec:
               value: {{ .Values.application.jwtIssuer | quote }}
             - name: Authentication__Jwt__Audience
               value: {{ .Values.application.jwtAudience | quote }}
-            {{- if eq .Values.secrets.mode "Environment" }}
+            {{- if eq .Values.secrets.mode "AppSettings" }}
             - name: Authentication__Jwt__SigningKey
               valueFrom:
                 secretKeyRef:
@@ -74,8 +78,21 @@ spec:
             httpGet: {path: /health, port: http}
             periodSeconds: 10
           resources: {{ toYaml .Values.resources | nindent 12 }}
-          volumeMounts: [{name: tmp, mountPath: /tmp}]
-      volumes: [{name: tmp, emptyDir: {}}]
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+            {{- if and (ne .Values.secrets.mode "KeyVaultRequired") .Values.application.fallbackSecretName }}
+            - {name: fallback-secrets, mountPath: /etc/vm-acme/secrets, readOnly: true}
+            {{- end }}
+      volumes:
+        - {name: tmp, emptyDir: {}}
+        {{- if and (ne .Values.secrets.mode "KeyVaultRequired") .Values.application.fallbackSecretName }}
+        - name: fallback-secrets
+          secret:
+            secretName: {{ .Values.application.fallbackSecretName }}
+            items:
+              - key: appsettings.secrets.json
+                path: appsettings.secrets.json
+        {{- end }}
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
       affinity: {{ toYaml .Values.affinity | nindent 8 }}

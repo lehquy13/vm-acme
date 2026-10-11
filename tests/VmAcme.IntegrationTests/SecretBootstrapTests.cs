@@ -7,11 +7,11 @@ public sealed class SecretBootstrapTests
 {
     private static ConfigurationManager Settings() => new()
     {
-        ["Secrets:Mode"] = "KeyVault",
+        ["Secrets:Mode"] = "KeyVaultRequired",
         ["Secrets:VaultUri"] = "https://example.vault.azure.net/",
         ["Secrets:ConnectionSecret"] = "api-connection",
         ["Secrets:JwtSecret"] = "api-jwt",
-        ["ConnectionStrings:DefaultConnection"] = "stale"
+        ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=fallback"
     };
 
     [Fact]
@@ -22,10 +22,10 @@ public sealed class SecretBootstrapTests
         await SecretBootstrap.LoadAsync(configuration, true, (_, name, _) =>
         {
             names.Add(name);
-            return Task.FromResult(name + "-value");
+            return Task.FromResult(name == "api-jwt" ? new string('k', 40) : "Host=localhost;Database=vault");
         });
         Assert.Equal(new[] { "api-connection", "api-jwt" }, names);
-        Assert.Equal("api-connection-value", configuration.GetConnectionString("DefaultConnection"));
+        Assert.Equal("Host=localhost;Database=vault", configuration.GetConnectionString("DefaultConnection"));
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public sealed class SecretBootstrapTests
         await SecretBootstrap.LoadAsync(configuration, false, (_, name, _) =>
         {
             Assert.Equal("api-connection", name);
-            return Task.FromResult("connection");
+            return Task.FromResult("Host=localhost;Database=vault");
         });
     }
 
@@ -44,9 +44,9 @@ public sealed class SecretBootstrapTests
     public async Task Read_failure_aborts_without_partial_configuration()
     {
         var configuration = Settings();
-        await Assert.ThrowsAsync<IOException>(() => SecretBootstrap.LoadAsync(configuration, true,
+        await Assert.ThrowsAsync<InvalidOperationException>(() => SecretBootstrap.LoadAsync(configuration, true,
             (_, name, _) => name == "api-jwt" ? throw new IOException("Unavailable") : Task.FromResult("new")));
-        Assert.Equal("stale", configuration.GetConnectionString("DefaultConnection"));
+        Assert.Equal("Host=localhost;Database=fallback", configuration.GetConnectionString("DefaultConnection"));
     }
 
     [Theory]

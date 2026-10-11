@@ -10,8 +10,8 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<VmA
 {
     public VmAcmeDbContext CreateDbContext(string[] args)
     {
-        var configuration = new ConfigurationManager();
-        configuration.AddEnvironmentVariables();
+        var configuration = SecretBootstrap.CreateConfiguration();
+        configuration["Persistence:Provider"] = "SqlServer";
         SecretBootstrap.LoadAsync(configuration, includeJwt: false).GetAwaiter().GetResult();
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         if (string.IsNullOrWhiteSpace(connectionString))

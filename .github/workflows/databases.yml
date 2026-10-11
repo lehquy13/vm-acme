@@ -22,4 +22,10 @@ jobs:
         run: ./scripts/build-bundles.ps1 -Runtime linux-x64
       - name: Run required PostgreSQL and SQL Server tests and bundles
         shell: pwsh
-        run: ./scripts/test-databases.ps1 -BundleRuntime linux-x64
+        run: ./scripts/test-databases.ps1 -BundleRuntime linux-x64 -EvidenceDirectory artifacts/database-tests
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-proof-${{ github.sha }}
+          path: artifacts/database-tests
+          if-no-files-found: error

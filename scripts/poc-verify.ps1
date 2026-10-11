@@ -2,43 +2,11 @@ param([ValidateSet('postgres','sqlserver')][string]$Provider='postgres')
 $ErrorActionPreference='Stop'
 . "$PSScriptRoot/poc-common.ps1"
 $config=Get-Config $Provider
-function Get-SourceProvenance {
-    $entries=New-Object 'System.Collections.Generic.List[string]'
-    foreach($directory in @('src','tools','migrations')) {
-        $path=Join-Path $Root $directory
-        if(Test-Path -LiteralPath $path) {
-            foreach($file in Get-ChildItem -LiteralPath $path -Recurse -File) {
-                $relative=$file.FullName.Substring($Root.Length).TrimStart('\','/').Replace('\','/')
-                if($relative -match '(^|/)(bin|obj|\.git|generated|testresults|node_modules)/'){continue}
-                $hash=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-                $entries.Add("$relative`t$hash")
-            }
-        }
-    }
-    foreach($name in @('Dockerfile','.dockerignore','Directory.Build.props')) {
-        $path=Join-Path $Root $name
-        if(Test-Path -LiteralPath $path) {
-            $hash=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
-            $entries.Add("$name`t$hash")
-        }
-    }
-    [string[]]$sorted=$entries.ToArray()
-    [Array]::Sort($sorted,[StringComparer]::Ordinal)
-    $canonical=[Text.Encoding]::UTF8.GetBytes(($sorted -join "`n"))
-    $digest=[Security.Cryptography.SHA256]::Create()
-    try { $sha=[BitConverter]::ToString($digest.ComputeHash($canonical)).Replace('-','').ToLowerInvariant() }
-    finally { $digest.Dispose() }
-    $status=@(Run 'git' @('status','--porcelain','--untracked-files=all','--','src','tools','migrations','Dockerfile','.dockerignore','Directory.Build.props'))
-    return [pscustomobject]@{
-        sourceSha=((Run 'git' @('rev-parse','HEAD')) -join '').Trim()
-        sourceDirty=($status.Count -gt 0)
-        sourceFingerprint=$sha
-    }
-}
 $currentSource=Get-SourceProvenance
-if(-not $config.sourceFingerprint -or $config.sourceFingerprint -ne $currentSource.sourceFingerprint) {
-    throw 'PoC config source fingerprint does not match current product inputs; rerun scripts/poc-up.sh before verification.'
+if(-not $config.sourceFingerprint -or $config.sourceFingerprint -ne $currentSource.sourceFingerprint -or $config.sourceSha -ne $currentSource.sourceSha) {
+    throw 'PoC config source SHA or generated-tree fingerprint does not match this checkout; rerun scripts/poc-up.sh before verification.'
 }
+if($config.proofId -and $currentSource.sourceDirty){throw 'Proof checkout became dirty after the generated commit; restore a clean checkout before verification.'}
 $run=Get-Date -Format 'yyyyMMdd-HHmmss'
 $evidence=Join-Path $State "$Provider/verify-$run"
 New-Item -ItemType Directory -Force -Path $evidence | Out-Null
@@ -163,7 +131,7 @@ try {
     Write-Utf8 "$evidence/api.log" $logs
     Assert-Gate ($logs -match 'HTTP') 'emitted API request logs inspected'
     Diagnostics $config.namespace $evidence
-    $report=@{status='PASS';provider=$Provider;schemaUpgradeExecuted=$schemaUpgradeExecuted;mechanism='Helm pre-install/pre-upgrade migration Job (Argo CD not executed)';sourceSha=$config.sourceSha;sourceDirty=$config.sourceDirty;sourceFingerprint=$config.sourceFingerprint;gates=$gates.ToArray();evidence=$evidence;initialHistory=$before;finalHistory=$after;apiImageIds=$imageIds;migratorImageIds=$migrationImageIds;timeUtc=[DateTime]::UtcNow.ToString('o')}
+    $report=@{status='PASS';provider=$Provider;proofId=$config.proofId;initializedName=$config.initializedName;preInitSourceSHA=$config.preInitSourceSha;namespace=$config.namespace;databaseName=$config.databaseName;scenario=$(if($config.databaseName -and $config.databaseName -ne 'acme' -and $schemaUpgradeExecuted){'fresh-v1-to-v2'}elseif($schemaUpgradeExecuted){'populated-v1-to-v2'}else{'preexisting-v2-rerun'});schemaUpgradeExecuted=$schemaUpgradeExecuted;mechanism='Helm pre-install/pre-upgrade migration Job (Argo CD not executed)';sourceSHA=$config.sourceSha;sourceDirty=$config.sourceDirty;sourceFingerprint=$config.sourceFingerprint;generatedTreeFingerprint=$config.generatedTreeFingerprint;commands=@($config.upCommand,"scripts/poc-verify.ps1 -Provider $Provider");gates=$gates.ToArray();evidence=$evidence;initialHistory=$before;finalHistory=$after;apiImageIds=$imageIds;migratorImageIds=$migrationImageIds;timeUtc=[DateTime]::UtcNow.ToString('o')}
     Write-Utf8 "$evidence/report.json" ($report|ConvertTo-Json -Depth 12)
     Write-Utf8 (Join-Path $State "$Provider/latest-report.txt") $evidence
     Write-Host "VERIFY PASS provider=$Provider gates=$($gates.Count) evidence=$evidence"

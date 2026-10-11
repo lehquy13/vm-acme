@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Operator-provisioned secrets (never tracked)
+appsettings.secrets.json
+appsettings.*.secrets.json

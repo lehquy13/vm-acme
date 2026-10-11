@@ -1,6 +1,6 @@
 profile: dev
 secrets:
-  mode: KeyVault
+  mode: KeyVaultRequired
 # REQUIRED: supply private image repositories + immutable tags, external connection
 # secrets, registry pull secret, and identity annotations in a company-owned overlay.
 replicaCount: 2

@@ -43,12 +43,12 @@ FROM source AS bundle-build
 ARG BUNDLE_RUNTIME=linux-x64
 RUN dotnet tool install dotnet-ef --version 10.0.12 --tool-path /ef-tools
 RUN dotnet restore migrations/VmAcme.Migrations.PostgreSql --runtime ${BUNDLE_RUNTIME} \
-    && Secrets__Mode=Environment ConnectionStrings__DefaultConnection='Host=localhost;Database=bundle' \
+    && Secrets__Mode=AppSettings ConnectionStrings__DefaultConnection='Host=localhost;Database=bundle' \
     /ef-tools/dotnet-ef migrations bundle --project migrations/VmAcme.Migrations.PostgreSql \
     --startup-project migrations/VmAcme.Migrations.PostgreSql --self-contained --target-runtime ${BUNDLE_RUNTIME} \
     --configuration Release --output /app/efbundle-postgresql
 RUN dotnet restore migrations/VmAcme.Migrations.SqlServer --runtime ${BUNDLE_RUNTIME} \
-    && Secrets__Mode=Environment ConnectionStrings__DefaultConnection='Server=localhost;Database=bundle;Integrated Security=True' \
+    && Secrets__Mode=AppSettings ConnectionStrings__DefaultConnection='Server=localhost;Database=bundle;Integrated Security=True' \
     /ef-tools/dotnet-ef migrations bundle --project migrations/VmAcme.Migrations.SqlServer \
     --startup-project migrations/VmAcme.Migrations.SqlServer --self-contained --target-runtime ${BUNDLE_RUNTIME} \
     --configuration Release --output /app/efbundle-sqlserver

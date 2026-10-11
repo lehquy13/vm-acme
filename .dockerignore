@@ -9,3 +9,6 @@ artifacts/
 .codegraph/
 .env
 .env.*
+
+**/appsettings.secrets.json
+**/appsettings.*.secrets.json

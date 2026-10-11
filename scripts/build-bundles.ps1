@@ -12,7 +12,7 @@ $tool = if ($env:OS -eq 'Windows_NT') { Join-Path $toolDirectory 'dotnet-ef.exe'
 $oldConnection = $env:ConnectionStrings__DefaultConnection
 $oldMode = $env:Secrets__Mode
 try {
-    $env:Secrets__Mode = 'Environment'
+    $env:Secrets__Mode = 'AppSettings'
     foreach ($provider in @('PostgreSql', 'SqlServer')) {
         # Design-time model creation only; no database access or secret in bundle artifacts.
         $env:ConnectionStrings__DefaultConnection = if ($provider -eq 'PostgreSql') { 'Host=localhost;Database=bundle' } else { 'Server=localhost;Database=bundle;Integrated Security=True' }

@@ -6,48 +6,42 @@ $ErrorActionPreference = 'Stop'
 $scriptRoot = $PSScriptRoot
 $placeholder = 'A' + 'cme'
 $lowerPlaceholder = $placeholder.ToLowerInvariant()
+Import-Module (Join-Path $scriptRoot 'scripts/TemplateNaming.psm1') -Force
 
 Push-Location $scriptRoot
 try {
-    if ([string]::IsNullOrWhiteSpace($Name)) {
-        $Name = Read-Host 'Project name [acme]'
+    if (Test-Path -LiteralPath (Join-Path $scriptRoot '.template-initialized')) {
+        throw 'This checkout has already been initialized. The initializer is one-time only.'
     }
-
-    $projectName = if ([string]::IsNullOrWhiteSpace($Name)) { $lowerPlaceholder } else { $Name.Trim() }
-    if ($projectName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') {
-        throw 'Project name must start with a letter and contain only letters, digits, or underscores.'
-    }
-
-    $projectName = $projectName.Substring(0, 1).ToUpperInvariant() + $projectName.Substring(1)
-
-    $projectNameLower = $projectName.ToLowerInvariant()
-    $projectNameUpper = $projectName.ToUpperInvariant()
-    if ($projectNameLower.EndsWith('_', [StringComparison]::Ordinal)) {
-        throw 'Project name must not end with an underscore.'
-    }
-    $deploymentSlug = $projectNameLower.Replace('_', '-')
-    $deploymentName = "vm-$deploymentSlug"
-    if ($deploymentSlug.Length -gt 40) {
-        throw 'Deployment slug must be 40 characters or fewer.'
-    }
+    if ([string]::IsNullOrWhiteSpace($Name)) { $Name = Read-Host 'Repository/project name [acme]' }
+    $requestedName = if ([string]::IsNullOrWhiteSpace($Name)) { $lowerPlaceholder } else { $Name.Trim() }
+    $names = Get-TemplateNames $requestedName
+    $projectName = $names.Brand
+    $projectNameLower = $names.BrandLower
+    $projectNameUpper = $names.BrandUpper
+    $deploymentName = $names.DeploymentName
+    $solutionFile = $names.SolutionFile
     $solutionPath = Join-Path $scriptRoot "vm-$lowerPlaceholder.slnx"
     if (-not (Test-Path -LiteralPath $solutionPath)) {
         throw "Could not find the $placeholder template solution. Run this initializer before renaming the template."
     }
 
     if ($projectName -cne $placeholder) {
+        $originUrl = git -C $scriptRoot remote get-url origin 2>$null
+        if (($env:GITHUB_REPOSITORY -and $env:GITHUB_REPOSITORY.Equals('lehquy13/vm-acme', [StringComparison]::OrdinalIgnoreCase)) -or
+            ($originUrl -match 'github\.com[:/]lehquy13/vm-acme(?:\.git)?$')) {
+            throw 'Refusing to initialize the original template repository.'
+        }
         $excludedPath = '(^|[\\/])(\.git|\.codegraph|artifacts|\.idea|\.superpowers|\.poc|bin|obj)([\\/]|$)'
         $textExtensions = @('.cs', '.csproj', '.slnx', '.props', '.json', '.http', '.yaml', '.yml', '.tpl', '.md', '.sh', '.ps1', '.txt')
-        $solutionFile = "vm-$projectNameLower.slnx"
-
         function Replace-TemplateTokens([string]$Value) {
             $evaluator = [System.Text.RegularExpressions.MatchEvaluator] {
                 param($match)
                 switch -CaseSensitive ($match.Value) {
                     'vm-acme.slnx' { $solutionFile }
                     'vm-acme' { $deploymentName }
-                    'vm_acme' { "vm_$projectNameLower" }
-                    'VM_ACME' { "VM_$projectNameUpper" }
+                    'vm_acme' { $names.MetricPrefix }
+                    'VM_ACME' { $names.EnvironmentPrefix }
                     'Acme' { $projectName }
                     'acme' { $projectNameLower }
                 }
@@ -59,7 +53,7 @@ try {
             Where-Object {
                 $_.FullName -notmatch $excludedPath -and
                 ($textExtensions -contains $_.Extension -or $_.Name -in @('Dockerfile', '.dockerignore', '.gitignore')) -and
-                $_.Name -notin @('init.ps1', 'init.sh')
+                $_.Name -notin @('init.ps1', 'init.sh', 'bootstrap-template.ps1', 'TemplateNaming.psm1', 'test-template-naming.ps1', 'test-template-naming.sh')
             }
 
         foreach ($file in $files) {
@@ -84,7 +78,6 @@ try {
         }
     }
 
-    $solutionFile = "vm-$projectNameLower.slnx"
     dotnet restore $solutionFile
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet restore failed with exit code $LASTEXITCODE"

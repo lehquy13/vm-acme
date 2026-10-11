@@ -16,15 +16,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- fail "persistence.provider must be PostgreSql or SqlServer" -}}
 {{- end -}}
 {{- if eq .Values.phase "application" -}}
-{{- if not (has .Values.secrets.mode (list "Environment" "KeyVault")) -}}
-{{- fail "secrets.mode must be Environment or KeyVault" -}}
+{{- if not (has .Values.secrets.mode (list "AppSettings" "KeyVaultRequired" "KeyVaultWithFallback")) -}}
+{{- fail "secrets.mode must be AppSettings, KeyVaultRequired, or KeyVaultWithFallback" -}}
 {{- end -}}
-{{- if and (eq .Values.profile "dev") (ne .Values.secrets.mode "KeyVault") -}}
-{{- fail "dev profile requires KeyVault secret mode" -}}
+{{- if and (eq .Values.profile "dev") (not (has .Values.secrets.mode (list "KeyVaultRequired" "KeyVaultWithFallback"))) -}}
+{{- fail "dev profile requires KeyVaultRequired or KeyVaultWithFallback secret mode" -}}
 {{- end -}}
 {{- $_ := required "image.repository is required" .Values.image.repository -}}
 {{- $_ := required "image.tag is required (use immutable release artifacts)" .Values.image.tag -}}
-{{- if eq .Values.secrets.mode "KeyVault" -}}
+{{- if ne .Values.secrets.mode "AppSettings" -}}
 {{- if ne (toString (index .Values.application.podLabels "azure.workload.identity/use")) "true" -}}
 {{- fail "KeyVault requires application.podLabels azure.workload.identity/use=true" -}}
 {{- end -}}
@@ -34,6 +34,20 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- $_ := required "application.vaultJwtSecret is required" .Values.application.vaultJwtSecret -}}
 {{- else -}}
 {{- $_ := required "application.connectionSecret is required" .Values.application.connectionSecret -}}
+{{- end -}}
+{{- if eq .Values.secrets.mode "KeyVaultWithFallback" -}}
+{{- $_ := required "KeyVaultWithFallback requires application.fallbackSecretName" .Values.application.fallbackSecretName -}}
+{{- $_ := required "KeyVaultWithFallback requires migration.fallbackSecretName" .Values.migration.fallbackSecretName -}}
+{{- if eq .Values.application.fallbackSecretName .Values.migration.fallbackSecretName -}}
+{{- fail "API and migrator require separate fallback secrets" -}}
+{{- end -}}
+{{- end -}}
+{{- if and (eq .Values.secrets.mode "AppSettings") (or .Values.application.fallbackSecretName .Values.migration.fallbackSecretName) -}}
+{{- $_ := required "AppSettings fallback requires application.fallbackSecretName" .Values.application.fallbackSecretName -}}
+{{- $_ := required "AppSettings fallback requires migration.fallbackSecretName" .Values.migration.fallbackSecretName -}}
+{{- if eq .Values.application.fallbackSecretName .Values.migration.fallbackSecretName -}}
+{{- fail "API and migrator require separate fallback secrets" -}}
+{{- end -}}
 {{- end -}}
 {{- if .Values.migration.enabled -}}
 {{- if not (has .Values.migration.artifact (list "Runner" "Bundle")) -}}
@@ -47,7 +61,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- $_ := required "migration.image.repository is required" .Values.migration.image.repository -}}
 {{- $_ := required "migration.image.tag is required" .Values.migration.image.tag -}}
-{{- if eq .Values.secrets.mode "KeyVault" -}}
+{{- if ne .Values.secrets.mode "AppSettings" -}}
 {{- if ne (toString (index .Values.migration.podLabels "azure.workload.identity/use")) "true" -}}
 {{- fail "KeyVault requires migration.podLabels azure.workload.identity/use=true" -}}
 {{- end -}}

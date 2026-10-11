@@ -11,8 +11,9 @@ imagePullSecrets: []
 persistence:
   provider: PostgreSql
 secrets:
-  mode: Environment
+  mode: AppSettings
   vaultUri: ""
+  fallbackFile: /etc/vm-acme/secrets/appsettings.secrets.json
 application:
   vaultConnectionSecret: ""
   vaultJwtSecret: ""
@@ -21,6 +22,7 @@ application:
   connectionKey: connection
   jwtSigningSecret: vm-acme-jwt
   jwtSigningKey: signing-key
+  fallbackSecretName: ""
   jwtIssuer: vm-acme
   jwtAudience: vm-acme-api
   podLabels: {}
@@ -38,6 +40,7 @@ migration:
   serviceAccountAnnotations: {}
   connectionSecret: ""
   connectionKey: connection
+  fallbackSecretName: ""
   podLabels: {}
   podAnnotations: {}
   target: ""

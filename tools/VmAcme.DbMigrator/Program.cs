@@ -10,10 +10,12 @@ using VmAcme.Migrations.PostgreSql;
 using VmAcme.Persistence;
 
 MigrationOptions? options;
-var configuration = new ConfigurationManager();
-configuration.AddEnvironmentVariables();
+var configuration = SecretBootstrap.CreateConfiguration();
 try
 {
+    var (startupProvider, startupConnection) = ParseCommandLineArguments(args);
+    if (startupProvider is not null) configuration["Persistence:Provider"] = startupProvider;
+    if (startupConnection is not null && (configuration["Secrets:Mode"] ?? "AppSettings") == "AppSettings") configuration["ConnectionStrings:DefaultConnection"] = startupConnection;
     await SecretBootstrap.LoadAsync(configuration, includeJwt: false);
     options = ParseArguments(args, configuration);
 }
@@ -113,8 +115,8 @@ static MigrationOptions? ParseArguments(string[] arguments, IConfiguration confi
 {
     var (cliProvider, cliConnectionString) = ParseCommandLineArguments(arguments);
 
-    var provider = cliProvider ?? Environment.GetEnvironmentVariable("Persistence__Provider");
-    var connectionString = configuration["Secrets:Mode"] == "KeyVault"
+    var provider = cliProvider ?? configuration["Persistence:Provider"];
+    var connectionString = configuration["Secrets:Mode"] is "KeyVaultRequired" or "KeyVaultWithFallback"
         ? configuration.GetConnectionString("DefaultConnection")
         : cliConnectionString ?? configuration.GetConnectionString("DefaultConnection");
 

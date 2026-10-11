@@ -23,7 +23,7 @@ builder.Services.AddOpenTelemetry()
         .AddSqlClientInstrumentation().AddSource("Npgsql")
         .AddProcessor(new DatabaseTraceRedactor()).AddOtlpExporter())
     .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation()
-        .AddMeter("System.Runtime", "Npgsql", "Microsoft.Data.SqlClient", "VmAcme.Database").AddOtlpExporter());
+        .AddMeter("System.Runtime", "Npgsql", "Microsoft.Data.SqlClient", "VmAcme.Database", "VmAcme.Secrets").AddOtlpExporter());
 
 builder.Services
     .AddApplication()
@@ -87,6 +87,7 @@ app.MapGet("/version", () => Results.Ok(new
         ?.InformationalVersion
 })).AllowAnonymous();
 app.MapGet("/metrics", (RequestMetrics metrics) => Results.Text(
+    $"vm_acme_secret_fallback_active {(builder.Configuration["Secrets:ResolvedSource"] == "Fallback" ? 1 : 0)}\n" +
     "# HELP vm_acme_http_requests_total Requests handled by this API process.\n" +
     "# TYPE vm_acme_http_requests_total counter\n" +
     $"vm_acme_http_requests_total {Interlocked.Read(ref requests)}\n" +

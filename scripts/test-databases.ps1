@@ -1,4 +1,4 @@
-param([string]$BundleRuntime)
+param([string]$BundleRuntime, [string]$EvidenceDirectory)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $suffix = [Guid]::NewGuid().ToString('N').Substring(0, 10)
@@ -9,6 +9,7 @@ $sqlPassword = "Aa1!$([Guid]::NewGuid().ToString('N'))$([Guid]::NewGuid().ToStri
 $oldPostgres = $env:VM_ACME_TEST_POSTGRESQL
 $oldSql = $env:VM_ACME_TEST_SQLSERVER
 $resultsDirectory = Join-Path ([IO.Path]::GetTempPath()) "vm-acme-test-results-$suffix"
+if ($EvidenceDirectory) { $resultsDirectory = [IO.Path]::GetFullPath($EvidenceDirectory) }
 
 function Invoke-ReadinessProbe([string[]]$Arguments) {
     # Windows PowerShell treats native stderr as an error even when redirected.
@@ -88,13 +89,34 @@ try {
         $oldConnection = $env:ConnectionStrings__DefaultConnection
         $oldMode = $env:Secrets__Mode
         try {
-            $env:Secrets__Mode = 'Environment'
+            $env:Secrets__Mode = 'AppSettings'
             foreach ($provider in @('postgresql', 'sqlserver')) {
-                $env:ConnectionStrings__DefaultConnection = if ($provider -eq 'postgresql') { $env:VM_ACME_TEST_POSTGRESQL } else { $env:VM_ACME_TEST_SQLSERVER }
+                $connection = if ($provider -eq 'postgresql') { $env:VM_ACME_TEST_POSTGRESQL } else { $env:VM_ACME_TEST_SQLSERVER }
                 $bundle = Join-Path $repoRoot "artifacts/bundles/$BundleRuntime/efbundle-$provider"
                 if ($BundleRuntime -like 'win-*') { $bundle += '.exe' }
-                & $bundle
-                if ($LASTEXITCODE -ne 0) { throw "Self-contained $provider bundle failed." }
+                $secretDirectory = Join-Path ([IO.Path]::GetTempPath()) "vm-acme-bundle-secrets-$suffix-$provider"
+                New-Item -ItemType Directory -Force $secretDirectory | Out-Null
+                $secretFile = Join-Path $secretDirectory 'appsettings.secrets.json'
+                $oldFile=$env:Secrets__FallbackFile; $oldBase=$env:Secrets__BaseDirectory
+                try {
+                    @{ConnectionStrings=@{DefaultConnection=$connection}} | ConvertTo-Json -Depth 4 | Set-Content $secretFile
+                    $env:ConnectionStrings__DefaultConnection=$null
+                    $env:Secrets__FallbackFile='appsettings.secrets.json'
+                    $env:Secrets__BaseDirectory=$secretDirectory
+                    Push-Location ([IO.Path]::GetTempPath())
+                    try {
+                        & $bundle
+                        if ($LASTEXITCODE -ne 0) { throw "Self-contained $provider bundle file resolution failed." }
+                        $providerName=if($provider -eq 'postgresql'){'PostgreSql'}else{'SqlServer'}
+                        dotnet run --project (Join-Path $repoRoot 'tools/VmAcme.DbMigrator') -- --provider $providerName
+                        if ($LASTEXITCODE -ne 0) { throw "Custom $provider migrator file resolution failed." }
+                    } finally { Pop-Location }
+                    Write-Host "PASS bundle and custom migrator explicit file from unrelated working directory provider=$providerName"
+                } finally {
+                    $env:Secrets__FallbackFile=$oldFile; $env:Secrets__BaseDirectory=$oldBase
+                    Remove-Item -LiteralPath $secretFile -Force
+                    Remove-Item -LiteralPath $secretDirectory
+                }
             }
         } finally {
             $env:ConnectionStrings__DefaultConnection = $oldConnection
@@ -106,10 +128,20 @@ try {
     dotnet test (Join-Path $repoRoot 'vm-acme.slnx') --verbosity minimal --logger trx --results-directory $resultsDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Database verification failed.' }
     Assert-DatabaseTestResults $resultsDirectory
+    if ($EvidenceDirectory) {
+        $sourceSha = (git -C $repoRoot rev-parse HEAD).Trim()
+        $dirty = @(git -C $repoRoot status --porcelain).Count -ne 0
+        @{status='PASS';sourceSha=$sourceSha;cleanCheckout=(-not $dirty);command="scripts/test-databases.ps1 -BundleRuntime $BundleRuntime -EvidenceDirectory $EvidenceDirectory";requiredProviders=@('PostgreSql','SqlServer');timeUtc=[DateTime]::UtcNow.ToString('o')} |
+            ConvertTo-Json -Depth 6 | Set-Content (Join-Path $resultsDirectory 'database-report.json')
+    }
 }
 finally {
     $env:VM_ACME_TEST_POSTGRESQL = $oldPostgres
     $env:VM_ACME_TEST_SQLSERVER = $oldSql
     Invoke-ReadinessProbe -Arguments @('rm', '-f', $postgresName, $sqlName) | Out-Null
-    if (Test-Path -LiteralPath $resultsDirectory) { Remove-Item -LiteralPath $resultsDirectory -Recurse -Force }
+    if (-not $EvidenceDirectory -and (Test-Path -LiteralPath $resultsDirectory)) {
+        $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+        if (-not $resultsDirectory.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe temporary results path.' }
+        Remove-Item -LiteralPath $resultsDirectory -Recurse -Force
+    }
 }
