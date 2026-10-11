@@ -51,7 +51,7 @@ try {
 
         $files = Get-ChildItem -LiteralPath $scriptRoot -Force -Recurse -File |
             Where-Object {
-                $_.FullName -notmatch $excludedPath -and
+                ($_.FullName.Substring($scriptRoot.Length)) -notmatch $excludedPath -and
                 ($textExtensions -contains $_.Extension -or $_.Name -in @('Dockerfile', '.dockerignore', '.gitignore')) -and
                 $_.Name -notin @('init.ps1', 'init.sh', 'bootstrap-template.ps1', 'TemplateNaming.psm1', 'test-template-naming.ps1', 'test-template-naming.sh')
             }
@@ -63,14 +63,14 @@ try {
         }
 
         $filesToRename = Get-ChildItem -LiteralPath $scriptRoot -Force -Recurse -File |
-            Where-Object { $_.FullName -notmatch $excludedPath -and $_.Name.IndexOf($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
+            Where-Object { ($_.FullName.Substring($scriptRoot.Length)) -notmatch $excludedPath -and $_.Name.IndexOf($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
         foreach ($file in $filesToRename) {
             $newName = if ($file.Name -ceq "vm-$lowerPlaceholder.slnx") { $solutionFile } else { Replace-TemplateTokens $file.Name }
             Rename-Item -LiteralPath $file.FullName -NewName $newName
         }
 
         $directoriesToRename = Get-ChildItem -LiteralPath $scriptRoot -Force -Recurse -Directory |
-            Where-Object { $_.FullName -notmatch $excludedPath -and $_.Name.IndexOf($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) -ge 0 } |
+            Where-Object { ($_.FullName.Substring($scriptRoot.Length)) -notmatch $excludedPath -and $_.Name.IndexOf($lowerPlaceholder, [StringComparison]::OrdinalIgnoreCase) -ge 0 } |
             Sort-Object { $_.FullName.Length } -Descending
         foreach ($directory in $directoriesToRename) {
             $newName = Replace-TemplateTokens $directory.Name
